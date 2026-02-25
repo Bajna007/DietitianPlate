@@ -570,6 +570,29 @@ function recept_single_inline_styles() {
 }
 .makro-per-adag strong { color: var(--r-text); font-weight: 700; }
 
+/* ═══ MAKRÓ INFO-BOX ═══ */
+.makro-info {
+    margin-top: 14px;
+    padding: 12px 16px 12px 18px;
+    background: var(--r-bg);
+    border-left: 3px solid var(--r-accent);
+    border-radius: 0 var(--r-radius-sm) var(--r-radius-sm) 0;
+    font-size: 0.78rem;
+    line-height: 1.55;
+    color: var(--r-text-muted);
+}
+.makro-info p { margin: 0; }
+.makro-info p + p { margin-top: 6px; }
+.makro-info strong {
+    color: var(--r-accent-dark);
+    font-weight: 700;
+}
+.makro-info-factors {
+    font-size: 0.72rem;
+    letter-spacing: 0.01em;
+    opacity: 0.85;
+}
+
 /* ═══ PROGRESS BAR ═══ */
 .elkeszites-progress-wrap {
     flex: 1;

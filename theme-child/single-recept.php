@@ -218,22 +218,26 @@ get_header();
                                     <div class="makro-strip-item">
                                         <span class="makro-strip-value makro-val-feherje">0</span>
                                         <span class="makro-strip-label">fehérje (g)</span>
-                                        <span class="makro-strip-pct"><span class="makro-pct-feherje">0.0</span>%</span>
+                                        <span class="makro-strip-pct"><span class="makro-pct-feherje">0</span>E%</span>
                                     </div>
                                     <div class="makro-strip-divider"></div>
                                     <div class="makro-strip-item">
                                         <span class="makro-strip-value makro-val-szenhidrat">0</span>
                                         <span class="makro-strip-label">szénhidrát (g)</span>
-                                        <span class="makro-strip-pct"><span class="makro-pct-szenhidrat">0.0</span>%</span>
+                                        <span class="makro-strip-pct"><span class="makro-pct-szenhidrat">0</span>E%</span>
                                     </div>
                                     <div class="makro-strip-divider"></div>
                                     <div class="makro-strip-item">
                                         <span class="makro-strip-value makro-val-zsir">0</span>
                                         <span class="makro-strip-label">zsír (g)</span>
-                                        <span class="makro-strip-pct"><span class="makro-pct-zsir">0.0</span>%</span>
+                                        <span class="makro-strip-pct"><span class="makro-pct-zsir">0</span>E%</span>
                                     </div>
                                 </div>
                                 <div class="makro-per-adag" id="makro-per-adag"></div>
+                                <div class="makro-info">
+                                    <p><strong>Energia%</strong> (E%) azt mutatja, hogy az összes kalóriából mekkora arány jut fehérjére, szénhidrátra és zsírra &ndash; nem a tömeg (gramm) arányát.</p>
+                                    <p class="makro-info-factors">Atwater-faktorok: 1 g fehérje / szénhidrát = 4,1 kcal &middot; 1 g zsír = 9,3 kcal</p>
+                                </div>
                             </div>
                         </div>
 

@@ -99,11 +99,15 @@
     }
 
     function calcPercentages(m) {
-        if (m.kcal <= 0) { return { feherje: 0, szenhidrat: 0, zsir: 0 }; }
+        var fKcal = m.feherje * FACTORS.feherje;
+        var chKcal = m.szenhidrat * FACTORS.szenhidrat;
+        var zKcal = m.zsir * FACTORS.zsir;
+        var totalEnergy = fKcal + chKcal + zKcal;
+        if (totalEnergy <= 0) { return { feherje: 0, szenhidrat: 0, zsir: 0 }; }
         return {
-            feherje:    r2((m.feherje * FACTORS.feherje / m.kcal) * 100),
-            szenhidrat: r2((m.szenhidrat * FACTORS.szenhidrat / m.kcal) * 100),
-            zsir:       r2((m.zsir * FACTORS.zsir / m.kcal) * 100)
+            feherje:    Math.round((fKcal / totalEnergy) * 100),
+            szenhidrat: Math.round((chKcal / totalEnergy) * 100),
+            zsir:       Math.round((zKcal / totalEnergy) * 100)
         };
     }
 
@@ -130,9 +134,9 @@
         setText('.makro-val-szenhidrat', m.szenhidrat);
         setText('.makro-val-zsir', m.zsir);
         setText('.makro-val-kcal', m.kcal);
-        setText('.makro-pct-feherje', pct.feherje.toFixed(1));
-        setText('.makro-pct-szenhidrat', pct.szenhidrat.toFixed(1));
-        setText('.makro-pct-zsir', pct.zsir.toFixed(1));
+        setText('.makro-pct-feherje', pct.feherje);
+        setText('.makro-pct-szenhidrat', pct.szenhidrat);
+        setText('.makro-pct-zsir', pct.zsir);
     }
 
     function updatePerAdag(m) {
