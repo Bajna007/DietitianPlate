@@ -625,32 +625,69 @@ function recept_single_inline_styles() {
 /* ═══════════════════════════════════════════════
    RESET BUTTON
    ═══════════════════════════════════════════════ */
-.alaphelyzet-btn {
+.recept-single .alaphelyzet-btn {
     display: block;
     margin: 20px auto 0;
-    background: var(--r-card);
-    border: 1px solid var(--r-border);
+    background: #fff;
+    border: 1px solid #d1d5db;
     padding: 8px 24px;
     border-radius: var(--r-radius-xs);
     font-size: 0.78rem;
     font-weight: 600;
-    color: var(--r-text-muted);
+    color: #374151;
     cursor: pointer;
     transition: all var(--r-transition);
     opacity: 0;
     pointer-events: none;
     transform: translateY(-6px);
 }
-.alaphelyzet-btn.is-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
-.alaphelyzet-btn:hover { border-color: #dc2626; color: #dc2626; background: rgba(220,38,38,0.04); }
-.alaphelyzet-btn:focus-visible { box-shadow: var(--r-focus-ring); outline: none; }
+.recept-single .alaphelyzet-btn.is-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+.recept-single .alaphelyzet-btn:hover {
+    background: #f3f4f6;
+    border-color: #9ca3af;
+    color: #111827;
+}
+.recept-single .alaphelyzet-btn:active {
+    background: #e5e7eb;
+    border-color: #9ca3af;
+}
+.recept-single .alaphelyzet-btn:focus-visible { box-shadow: var(--r-focus-ring); outline: none; }
 
 /* ═══════════════════════════════════════════════
-   MAKRÓ – card grid
+   Makró szekció header + kontraszt fix
+   Szelektorok: .recept-single .recept-section-body--makro és gyerekei,
+                .recept-single #tapanyag-adag-label
    ═══════════════════════════════════════════════ */
-.recept-section-body--makro { padding: 20px 24px; }
 
-.makro-warning {
+/* --- Tápanyag section header --- */
+.recept-single .recept-section-body--makro ~ .recept-section-header,
+.recept-single .recept-section:has(.recept-section-body--makro) > .recept-section-header {
+    position: relative;
+    background:
+        linear-gradient(135deg,
+            rgba(45,138,99,0.025) 0%,
+            rgba(45,138,99,0.055) 50%,
+            rgba(45,138,99,0.025) 100%
+        );
+    border-bottom: 1px solid rgba(45,138,99,0.12);
+    border-left: 3px solid rgba(45,138,99,0.4);
+    color: #1f2937;
+    padding: 14px 24px 14px 21px;
+}
+.recept-single #tapanyag-adag-label {
+    font-weight: 600;
+    font-size: 0.9em;
+    color: #6b7280;
+}
+
+/* --- Makró body --- */
+.recept-single .recept-section-body--makro {
+    padding: 20px 24px;
+    background: #fff;
+}
+
+/* --- Warning --- */
+.recept-single .makro-warning {
     background: rgba(220, 38, 38, 0.05);
     border-left: 3px solid #dc2626;
     padding: 10px 16px;
@@ -661,73 +698,79 @@ function recept_single_inline_styles() {
     line-height: 1.5;
 }
 
-.makro-strip {
+/* --- Makró kártyák grid --- */
+.recept-single .makro-strip {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
     gap: 12px;
 }
-.makro-strip-divider { display: none; }
+.recept-single .makro-strip-divider { display: none; }
 
-.makro-strip-item {
+.recept-single .makro-strip-item {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 4px;
     padding: 16px 8px;
-    background: var(--r-bg);
-    border: 1px solid var(--r-border-light);
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
     border-radius: var(--r-radius-sm);
     transition: border-color var(--r-transition);
 }
-.makro-strip-item:hover { border-color: var(--r-border); }
+.recept-single .makro-strip-item:hover { border-color: #d1d5db; }
 
-.makro-strip-item:first-child {
-    background: var(--r-accent-soft);
-    border-color: var(--r-accent-light);
+.recept-single .makro-strip-item:first-child {
+    background: rgba(45,138,99,0.05);
+    border-color: rgba(45,138,99,0.18);
 }
 
-.makro-strip-value {
+/* --- Makró értékek (explicit kontraszt) --- */
+.recept-single .makro-strip-value {
     font-size: 1.3rem;
     font-weight: 800;
-    color: var(--r-text);
+    color: #111827;
     line-height: 1;
     font-variant-numeric: tabular-nums;
 }
-.makro-strip-item:first-child .makro-strip-value {
-    color: var(--r-accent-dark);
+.recept-single .makro-strip-item:first-child .makro-strip-value {
+    color: #1e6b4a;
     font-size: 1.45rem;
 }
-.makro-strip-label {
+
+/* --- Makró labelek --- */
+.recept-single .makro-strip-label {
     font-size: 0.62rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    color: var(--r-text-muted);
+    color: #4b5563;
     font-weight: 600;
     text-align: center;
 }
-.makro-strip-pct {
+
+/* --- Energia% badge --- */
+.recept-single .makro-strip-pct {
     font-size: 0.68rem;
     font-weight: 700;
-    color: var(--r-accent-dark);
-    background: var(--r-accent-light);
+    color: #1e6b4a;
+    background: #e8f5ee;
     padding: 2px 10px;
     border-radius: var(--r-radius-xs);
     margin-top: 2px;
 }
 
-/* Per-adag row */
-.makro-per-adag {
+/* --- Per-adag sor --- */
+.recept-single .makro-per-adag {
     display: none;
     text-align: center;
     margin-top: 14px;
     padding: 10px 16px;
-    background: var(--r-bg);
+    background: #f9fafb;
     border-radius: var(--r-radius-xs);
     font-size: 0.78rem;
-    color: var(--r-text-muted);
-    border: 1px solid var(--r-border-light);
+    color: #4b5563;
+    border: 1px solid #e5e7eb;
 }
-.makro-per-adag strong { color: var(--r-text); font-weight: 700; }
+.recept-single .makro-per-adag strong { color: #111827; font-weight: 700; }
 
 /* ═══════════════════════════════════════════════
    MAKRÓ INFO-BOX
