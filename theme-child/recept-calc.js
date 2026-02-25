@@ -16,9 +16,13 @@
     var state = { servings: INITIAL_SERVINGS, quantities: [] };
 
     var originalQuantities = [];
+    var baseQuantities = [];
+    var baseServings = INITIAL_SERVINGS;
+
     INGS.forEach(function (ing) {
         originalQuantities.push(ing.mennyiseg);
         state.quantities.push(ing.mennyiseg);
+        baseQuantities.push(ing.mennyiseg);
     });
 
     var dom = {};
@@ -56,14 +60,14 @@
         });
     }
 
-    // ── Toast – display-alapú, nem opacity ──
+    // ???? Toast ?C display-alap??, nem opacity ????
     var toastTimer = null;
     function showToast(msg) {
         if (!dom.toast) { return; }
         clearTimeout(toastTimer);
         dom.toast.textContent = msg;
         dom.toast.style.display = 'block';
-        // kényszerített reflow hogy az animáció működjön
+        // k??nyszer??tett reflow hogy az anim??ci?? m?0?3k?0?2dj?0?2n
         void dom.toast.offsetHeight;
         dom.toast.classList.add('is-visible');
         toastTimer = setTimeout(function () {
@@ -74,7 +78,7 @@
         }, 2500);
     }
 
-    // ── Makrók ──
+    // ???? Makr??k ????
     function calcMacros() {
         var t = { kcal: 0, feherje: 0, szenhidrat: 0, zsir: 0 };
         INGS.forEach(function (ing, idx) {
@@ -166,10 +170,20 @@
     }
 
     function applyServings() {
+        var ratio = state.servings / baseServings;
+        INGS.forEach(function (ing, idx) {
+            state.quantities[idx] = r1(baseQuantities[idx] * ratio);
+        });
+        updateUI();
+    }
+
+    function resetToOriginal() {
         var ratio = state.servings / INITIAL_SERVINGS;
         INGS.forEach(function (ing, idx) {
             state.quantities[idx] = r1(originalQuantities[idx] * ratio);
         });
+        baseQuantities = state.quantities.slice();
+        baseServings = state.servings;
         updateUI();
     }
 
@@ -186,18 +200,58 @@
         applyServings();
     }
 
+    function normalizeNumericInput(raw) {
+        var s = String(raw).replace(/,/g, '.');
+        s = s.replace(/[^0-9.]/g, '');
+        var parts = s.split('.');
+        if (parts.length > 2) { s = parts[0] + '.' + parts.slice(1).join(''); }
+        return s;
+    }
+
     function onIngredientInput(e) {
         var idx = parseInt(e.target.dataset.index, 10);
         if (isNaN(idx)) { return; }
-        var raw = e.target.value.trim();
-        state.quantities[idx] = raw === '' ? 0 : (parseFloat(raw) || 0);
+
+        var val = parseFloat(e.target.value);
+        if (isNaN(val)) { return; }
+        if (val <= 0) { val = 0.1; }
+        if (val > 99999) { val = 99999; }
+
+        state.quantities[idx] = val;
+        baseQuantities = state.quantities.slice();
+        baseServings = state.servings;
+
         var m = calcMacros();
         updateMacroDisplay(m);
         updatePerAdag(m);
         checkModified();
     }
 
-    // ── Bevásárlólista ──
+    function onIngredientBlur(e) {
+        var idx = parseInt(e.target.dataset.index, 10);
+        if (isNaN(idx)) { return; }
+
+        var normalized = normalizeNumericInput(e.target.value);
+        var val = parseFloat(normalized);
+
+        if (isNaN(val) || val <= 0) {
+            val = state.quantities[idx];
+            if (!val || val <= 0) { val = 0.1; }
+        }
+        if (val > 99999) { val = 99999; }
+
+        state.quantities[idx] = r1(val);
+        e.target.value = r1(val);
+        baseQuantities = state.quantities.slice();
+        baseServings = state.servings;
+
+        var m = calcMacros();
+        updateMacroDisplay(m);
+        updatePerAdag(m);
+        checkModified();
+    }
+
+    // ???? Bev??s??rl??lista ????
     function buildShoppingLists() {
         var venni = [];
         var megvan = [];
@@ -290,7 +344,7 @@
         if (dom.sharePanel) { dom.sharePanel.classList.add('is-open'); }
     }
 
-    // ── Progress bar ──
+    // ???? Progress bar ????
     function updateProgress() {
         if (!dom.lepesCheckboxes.length) { return; }
 
@@ -319,12 +373,12 @@
         }
     }
 
-    // ── Init ──
+    // ???? Init ????
     function init() {
         cacheDom();
         if (!dom.adagInput) { return; }
 
-        // Toast alapból rejtett
+        // Toast alapb??l rejtett
         if (dom.toast) {
             dom.toast.style.display = 'none';
         }
@@ -338,20 +392,21 @@
         }
         dom.adagInput.addEventListener('input', onServingInput);
 
-        // Összetevők
+        // ?0?0sszetev?0?2k
         dom.ingInputs.forEach(function (inp) {
             inp.addEventListener('input', onIngredientInput);
+            inp.addEventListener('blur', onIngredientBlur);
         });
         if (dom.resetBtn) {
-            dom.resetBtn.addEventListener('click', function () { applyServings(); });
+            dom.resetBtn.addEventListener('click', function () { resetToOriginal(); });
         }
 
-        // Nyomtatás
+        // Nyomtat??s
         if (dom.printBtn) {
             dom.printBtn.addEventListener('click', function () { window.print(); });
         }
 
-        // Bevásárlólista vágólapra
+        // Bev??s??rl??lista v??g??lapra
         if (dom.listBtn) {
             dom.listBtn.addEventListener('click', function () {
                 var text = buildListText();
@@ -363,7 +418,7 @@
             });
         }
 
-        // Megosztás
+        // Megoszt??s
         if (dom.shareBtn) {
             dom.shareBtn.addEventListener('click', doShare);
         }

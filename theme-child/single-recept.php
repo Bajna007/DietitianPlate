@@ -170,7 +170,7 @@ get_header();
                                         <button type="button" id="adag-minusz" class="adag-stepper-btn">
                                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="2" y1="7" x2="12" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
                                         </button>
-                                        <input type="number" id="adagok-input" value="<?php echo esc_attr( $adagok_szama ? $adagok_szama : 1 ); ?>" min="1">
+                                        <input type="number" id="adagok-input" value="<?php echo esc_attr( $adagok_szama ? $adagok_szama : 1 ); ?>" min="1" max="999" inputmode="numeric">
                                         <button type="button" id="adag-plusz" class="adag-stepper-btn">
                                             <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><line x1="7" y1="2" x2="7" y2="12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><line x1="2" y1="7" x2="12" y2="7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
                                         </button>
@@ -189,7 +189,7 @@ get_header();
                                         <li class="osszetevo-sor" id="osszetevo-<?php echo $i; ?>">
                                             <label class="osszetevo-checkbox-label"><input type="checkbox"></label>
                                             <div class="osszetevo-mennyiseg-wrap">
-                                                <input type="number" step="0.1" min="0" class="osszetevo-mennyiseg-input" data-index="<?php echo $i; ?>" value="<?php echo esc_attr( $mennyiseg ); ?>">
+                                                <input type="number" step="0.1" min="0.1" max="99999" inputmode="decimal" class="osszetevo-mennyiseg-input" data-index="<?php echo $i; ?>" value="<?php echo esc_attr( $mennyiseg ); ?>">
                                                 <span class="osszetevo-mertekegyseg"><?php echo esc_html( $mertekegyseg ); ?></span>
                                             </div>
                                             <span class="osszetevo-nev">
