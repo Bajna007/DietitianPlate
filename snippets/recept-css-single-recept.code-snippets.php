@@ -215,31 +215,51 @@ function recept_single_inline_styles() {
 .share-btn--email:hover { border-color: #6366f1; color: #4f46e5; }
 
 /* ═══════════════════════════════════════════════
-   META BAR
+   META BAR – csak info sáv
    ═══════════════════════════════════════════════ */
-.recept-meta {
+.recept-single .recept-meta {
+    position: relative;
     display: flex;
     gap: 0;
     margin-bottom: 32px;
     border-radius: var(--r-radius);
     overflow: hidden;
-    background: var(--r-card);
-    border: 1px solid var(--r-border);
-    box-shadow: var(--r-shadow-sm);
+    background:
+        linear-gradient(135deg,
+            rgba(45,138,99,0.03) 0%,
+            rgba(45,138,99,0.07) 40%,
+            rgba(45,138,99,0.03) 100%
+        );
+    border: 1px solid rgba(45,138,99,0.13);
+    box-shadow:
+        0 1px 3px rgba(45,138,99,0.04),
+        0 4px 14px rgba(0,0,0,0.025);
+    border-top: 2.5px solid rgba(45,138,99,0.35);
 }
-.recept-meta p {
+.recept-single .recept-meta::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%232d8a63' fill-opacity='0.02'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+    border-radius: inherit;
+}
+.recept-single .recept-meta p {
+    position: relative;
+    z-index: 1;
     flex: 1;
     margin: 0;
-    padding: 14px 20px;
+    padding: 16px 22px;
     text-align: center;
     font-size: 0.88rem;
     font-weight: 500;
     color: var(--r-text-secondary);
-    border-right: 1px solid var(--r-border);
+    border-right: 1px solid rgba(45,138,99,0.10);
     line-height: 1.4;
 }
-.recept-meta p:last-child { border-right: none; }
-.recept-meta p strong { color: var(--r-text); font-weight: 700; }
+.recept-single .recept-meta p:last-child { border-right: none; }
+.recept-single .recept-meta p strong { color: var(--r-text); font-weight: 700; }
 
 /* ═══════════════════════════════════════════════
    LAYOUT (two-column grid)
@@ -465,39 +485,48 @@ function recept_single_inline_styles() {
     align-items: center;
     gap: 14px;
 }
-.adag-stepper-btn {
+.recept-single .adag-stepper-btn {
     width: 36px;
     height: 36px;
     border-radius: 50%;
     border: 1.5px solid var(--r-border);
-    background: var(--r-card);
+    background: #fff;
     color: var(--r-text-muted);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all var(--r-transition);
+    transition: background 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
     padding: 0;
     flex-shrink: 0;
 }
-.adag-stepper-btn svg {
+.recept-single .adag-stepper-btn svg {
     width: 14px;
     height: 14px;
 }
-.adag-stepper-btn svg line {
+.recept-single .adag-stepper-btn svg line {
     stroke: var(--r-text-muted);
     stroke-width: 2.5;
     stroke-linecap: round;
-    transition: stroke var(--r-transition);
+    transition: stroke 0.15s ease;
 }
-.adag-stepper-btn:hover {
-    background: var(--r-accent);
-    border-color: var(--r-accent);
-    color: #fff;
+.recept-single .adag-stepper-btn:hover {
+    background: #f3f4f6;
+    border-color: #d1d5db;
+    color: var(--r-text-secondary);
 }
-.adag-stepper-btn:hover svg line { stroke: #fff; }
-.adag-stepper-btn:active { transform: scale(0.92); }
-.adag-stepper-btn:focus-visible { box-shadow: var(--r-focus-ring); outline: none; }
+.recept-single .adag-stepper-btn:hover svg line { stroke: var(--r-text-secondary); }
+.recept-single .adag-stepper-btn:active {
+    background: #e5e7eb;
+    border-color: #c4c8cc;
+    transform: scale(0.94);
+}
+.recept-single .adag-stepper-btn:active svg line { stroke: var(--r-text); }
+.recept-single .adag-stepper-btn:focus-visible {
+    outline: 2px solid var(--r-border);
+    outline-offset: 2px;
+    box-shadow: none;
+}
 
 .adag-stepper-controls input#adagok-input {
     width: 52px;
@@ -897,9 +926,9 @@ function recept_single_inline_styles() {
     .recept-hero-overlay { padding: 24px 20px; }
     .recept-hero-overlay h1 { font-size: 1.45rem; }
 
-    .recept-meta { flex-direction: column; }
-    .recept-meta p { border-right: none; border-bottom: 1px solid var(--r-border-light); }
-    .recept-meta p:last-child { border-bottom: none; }
+    .recept-single .recept-meta { flex-direction: column; }
+    .recept-single .recept-meta p { border-right: none; border-bottom: 1px solid rgba(45,138,99,0.08); }
+    .recept-single .recept-meta p:last-child { border-bottom: none; }
 
     .recept-section-body { padding: 20px; }
     .recept-section-body--makro { padding: 16px 20px; }
