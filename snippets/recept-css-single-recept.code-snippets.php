@@ -1,57 +1,85 @@
 <?php
 
 /**
- * Recept CSS (single-recept)
+ * Recept CSS (single-recept) – Premium v1
  */
-// Recept prémium CSS v12 – adag stepper újratervezés
 function recept_single_inline_styles() {
     if ( ! is_singular( 'recept' ) ) { return; }
 
     $css = <<<CSS
 
+/* ═══════════════════════════════════════════════
+   DESIGN TOKENS
+   ═══════════════════════════════════════════════ */
 :root {
-    --r-accent: #2ecc71;
-    --r-accent-dark: #27ae60;
-    --r-accent-soft: rgba(46, 204, 113, 0.10);
-    --r-accent-glow: rgba(46, 204, 113, 0.25);
-    --r-bg: #f5f6f5;
+    --r-accent: #2d8a63;
+    --r-accent-dark: #1e6b4a;
+    --r-accent-soft: rgba(45, 138, 99, 0.06);
+    --r-accent-glow: rgba(45, 138, 99, 0.18);
+    --r-accent-light: #e8f5ee;
+
+    --r-bg: #f5f6f8;
     --r-card: #ffffff;
-    --r-border: #e8ebe9;
-    --r-text: #1e1e1e;
-    --r-text-muted: #7c8a83;
+    --r-border: #e5e7eb;
+    --r-border-light: #f0f1f3;
+
+    --r-text: #111827;
+    --r-text-secondary: #374151;
+    --r-text-muted: #6b7280;
+
     --r-radius: 16px;
     --r-radius-sm: 10px;
-    --r-shadow: 0 4px 24px rgba(0,0,0,0.05);
-    --r-shadow-lg: 0 8px 40px rgba(0,0,0,0.07);
-    --r-transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    --r-radius-xs: 6px;
+
+    --r-shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+    --r-shadow: 0 1px 4px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.03);
+    --r-shadow-lg: 0 2px 8px rgba(0,0,0,0.05), 0 8px 32px rgba(0,0,0,0.04);
+    --r-shadow-xl: 0 4px 16px rgba(0,0,0,0.06), 0 16px 48px rgba(0,0,0,0.05);
+
+    --r-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --r-transition-slow: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+
+    --r-focus-ring: 0 0 0 3px var(--r-accent-glow);
 }
 
+/* ═══════════════════════════════════════════════
+   BASE
+   ═══════════════════════════════════════════════ */
 .recept-single {
-    max-width: 1200px;
+    max-width: 1180px;
     margin: 0 auto;
-    padding: 0 20px 48px;
+    padding: 0 24px 64px;
     color: var(--r-text);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, sans-serif;
     line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+.recept-single *, .recept-single *::before, .recept-single *::after {
+    box-sizing: border-box;
 }
 .recept-single h1 {
     text-align: center;
-    font-size: clamp(1.7rem, 4vw, 2.4rem);
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
     font-weight: 800;
-    letter-spacing: -0.02em;
-    margin-bottom: 24px;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    margin-bottom: 28px;
+    color: var(--r-text);
 }
 
-/* ═══ HERO ═══ */
+/* ═══════════════════════════════════════════════
+   HERO
+   ═══════════════════════════════════════════════ */
 .recept-hero {
     position: relative;
     width: 100%;
-    height: 360px;
+    height: 400px;
     background-size: cover;
     background-position: center;
     border-radius: var(--r-radius);
     overflow: hidden;
-    margin-bottom: 28px;
+    margin-bottom: 32px;
     box-shadow: var(--r-shadow-lg);
 }
 .recept-hero-overlay {
@@ -59,36 +87,41 @@ function recept_single_inline_styles() {
     inset: 0;
     background: linear-gradient(
         to top,
-        rgba(0, 0, 0, 0.7) 0%,
-        rgba(0, 0, 0, 0.25) 40%,
-        rgba(0, 0, 0, 0.12) 100%
+        rgba(0, 0, 0, 0.72) 0%,
+        rgba(0, 0, 0, 0.18) 50%,
+        rgba(0, 0, 0, 0.06) 100%
     );
     display: flex;
     align-items: flex-end;
-    padding: 32px;
+    padding: 40px 36px;
 }
 .recept-hero-overlay h1 {
     color: #fff;
     text-align: left;
     margin: 0;
-    text-shadow: 0 2px 16px rgba(0,0,0,0.6), 0 1px 4px rgba(0,0,0,0.4);
-    font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+    text-shadow: 0 1px 8px rgba(0,0,0,0.4);
+    font-size: clamp(1.6rem, 3.5vw, 2.5rem);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    max-width: 680px;
 }
 
-/* ═══ TOAST ═══ */
+/* ═══════════════════════════════════════════════
+   TOAST
+   ═══════════════════════════════════════════════ */
 .recept-toast {
     display: none;
     position: fixed;
-    bottom: 24px;
+    bottom: 28px;
     left: 50%;
-    transform: translateX(-50%) translateY(20px);
-    background: var(--r-accent-dark);
+    transform: translateX(-50%) translateY(16px);
+    background: var(--r-text);
     color: #fff;
-    padding: 10px 24px;
-    border-radius: 999px;
+    padding: 12px 28px;
+    border-radius: var(--r-radius-sm);
     font-size: 0.85rem;
     font-weight: 600;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    box-shadow: var(--r-shadow-xl);
     opacity: 0;
     transition: opacity 0.3s ease, transform 0.3s ease;
     z-index: 9999;
@@ -99,144 +132,169 @@ function recept_single_inline_styles() {
     transform: translateX(-50%) translateY(0);
 }
 
-/* ═══ SHARE PANEL ═══ */
+/* ═══════════════════════════════════════════════
+   SHARE PANEL (modal)
+   ═══════════════════════════════════════════════ */
 .share-panel {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.5);
+    inset: 0;
+    background: rgba(17, 24, 39, 0.5);
     z-index: 9998;
     display: none;
     align-items: center;
     justify-content: center;
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
 }
 .share-panel.is-open { display: flex; }
 .share-panel-inner {
     background: var(--r-card);
     border-radius: var(--r-radius);
-    padding: 28px;
+    padding: 32px;
     max-width: 480px;
-    width: 90%;
+    width: 92%;
     position: relative;
-    box-shadow: var(--r-shadow-lg);
+    box-shadow: var(--r-shadow-xl);
 }
 .share-close {
     position: absolute;
-    top: 12px; right: 16px;
-    background: none; border: none;
-    font-size: 1.2rem;
+    top: 16px; right: 18px;
+    width: 32px; height: 32px;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--r-bg); border: 1px solid var(--r-border);
+    border-radius: 50%;
+    font-size: 0.85rem;
     cursor: pointer;
     color: var(--r-text-muted);
-    transition: color var(--r-transition);
+    transition: all var(--r-transition);
+    line-height: 1;
 }
-.share-close:hover { color: var(--r-text); }
-.share-title { margin: 0 0 16px; font-size: 1rem; font-weight: 700; }
+.share-close:hover { color: var(--r-text); background: var(--r-border-light); }
+.share-close:focus-visible { box-shadow: var(--r-focus-ring); outline: none; }
+.share-title {
+    margin: 0 0 20px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--r-text);
+}
 .share-textarea {
     width: 100%;
     border: 1px solid var(--r-border);
     border-radius: var(--r-radius-sm);
-    padding: 12px;
+    padding: 14px;
     font-size: 0.82rem;
     resize: none;
     font-family: inherit;
     color: var(--r-text);
     background: var(--r-bg);
-    margin-bottom: 16px;
-    line-height: 1.5;
-    box-sizing: border-box;
+    margin-bottom: 18px;
+    line-height: 1.6;
 }
+.share-textarea:focus { outline: none; border-color: var(--r-accent); box-shadow: var(--r-focus-ring); }
 .share-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
 .share-btn {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 8px 16px;
-    border-radius: 999px;
-    font-size: 0.78rem;
+    gap: 6px;
+    padding: 9px 18px;
+    border-radius: var(--r-radius-sm);
+    font-size: 0.8rem;
     font-weight: 600;
     text-decoration: none;
     cursor: pointer;
     transition: all var(--r-transition);
-    border: 1.5px solid var(--r-border);
+    border: 1px solid var(--r-border);
     background: var(--r-card);
     color: var(--r-text);
 }
-.share-btn:hover { border-color: var(--r-accent); background: var(--r-accent-soft); }
+.share-btn:hover { border-color: var(--r-accent); color: var(--r-accent-dark); background: var(--r-accent-soft); }
+.share-btn:focus-visible { box-shadow: var(--r-focus-ring); outline: none; }
 .share-btn--copy { background: var(--r-accent); color: #fff; border-color: var(--r-accent); }
-.share-btn--copy:hover { background: var(--r-accent-dark); }
-.share-btn--whatsapp:hover { border-color: #25d366; color: #25d366; }
-.share-btn--email:hover { border-color: #ea4335; color: #ea4335; }
+.share-btn--copy:hover { background: var(--r-accent-dark); border-color: var(--r-accent-dark); color: #fff; }
+.share-btn--whatsapp:hover { border-color: #25d366; color: #128c7e; }
+.share-btn--email:hover { border-color: #6366f1; color: #4f46e5; }
 
-/* ═══ META ═══ */
+/* ═══════════════════════════════════════════════
+   META BAR
+   ═══════════════════════════════════════════════ */
 .recept-meta {
     display: flex;
     gap: 0;
-    margin-bottom: 28px;
+    margin-bottom: 32px;
     border-radius: var(--r-radius);
     overflow: hidden;
-    box-shadow: var(--r-shadow);
-    border: 1px solid var(--r-border);
     background: var(--r-card);
+    border: 1px solid var(--r-border);
+    box-shadow: var(--r-shadow-sm);
 }
 .recept-meta p {
-    flex: 1; margin: 0;
-    padding: 13px 16px;
+    flex: 1;
+    margin: 0;
+    padding: 14px 20px;
     text-align: center;
     font-size: 0.88rem;
     font-weight: 500;
+    color: var(--r-text-secondary);
     border-right: 1px solid var(--r-border);
+    line-height: 1.4;
 }
 .recept-meta p:last-child { border-right: none; }
+.recept-meta p strong { color: var(--r-text); font-weight: 700; }
 
-/* ═══ LAYOUT ═══ */
+/* ═══════════════════════════════════════════════
+   LAYOUT (two-column grid)
+   ═══════════════════════════════════════════════ */
 .recept-layout {
     display: grid;
-    grid-template-columns: 280px 1fr;
+    grid-template-columns: 260px 1fr;
     gap: 28px;
     align-items: start;
 }
 
-/* ═══ SIDEBAR ═══ */
+/* ═══════════════════════════════════════════════
+   SIDEBAR
+   ═══════════════════════════════════════════════ */
 .recept-sidebar {
     position: sticky;
     top: 100px;
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 16px;
 }
 .sidebar-section {
     background: var(--r-card);
     border-radius: var(--r-radius);
-    box-shadow: var(--r-shadow);
     border: 1px solid var(--r-border);
+    box-shadow: var(--r-shadow-sm);
     overflow: hidden;
 }
 .sidebar-section-title {
-    background: var(--r-accent);
-    color: #fff;
-    padding: 10px 16px;
+    padding: 12px 18px;
     margin: 0;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.08em;
+    color: var(--r-text-muted);
+    background: var(--r-bg);
+    border-bottom: 1px solid var(--r-border);
 }
 .sidebar-cards { display: flex; flex-direction: column; }
 .sidebar-card {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 10px 14px;
+    gap: 12px;
+    padding: 12px 16px;
     text-decoration: none;
     color: var(--r-text);
     transition: background var(--r-transition);
-    border-bottom: 1px solid var(--r-border);
+    border-bottom: 1px solid var(--r-border-light);
 }
 .sidebar-card:last-child { border-bottom: none; }
 .sidebar-card:hover { background: var(--r-accent-soft); }
 .sidebar-card-img {
     width: 48px; height: 48px;
-    border-radius: 8px;
+    border-radius: var(--r-radius-xs);
     overflow: hidden;
     flex-shrink: 0;
     background: var(--r-bg);
@@ -245,33 +303,36 @@ function recept_single_inline_styles() {
 .sidebar-card-img-ph {
     width: 100%; height: 100%;
     display: flex; align-items: center; justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
+    color: var(--r-text-muted);
 }
 .sidebar-card-body {
     flex: 1; min-width: 0;
-    display: flex; flex-direction: column; gap: 2px;
+    display: flex; flex-direction: column; gap: 3px;
 }
 .sidebar-card-title {
     font-size: 0.82rem;
     font-weight: 600;
-    line-height: 1.3;
+    line-height: 1.35;
+    color: var(--r-text);
     display: -webkit-box;
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
-.sidebar-card-meta { font-size: 0.7rem; color: var(--r-text-muted); }
+.sidebar-card-meta { font-size: 0.72rem; color: var(--r-text-muted); }
 .sidebar-card-meta strong { color: var(--r-accent-dark); font-weight: 700; }
-.sidebar-kat-chips { padding: 12px 14px; display: flex; flex-wrap: wrap; gap: 6px; }
+
+.sidebar-kat-chips { padding: 14px 16px; display: flex; flex-wrap: wrap; gap: 6px; }
 .sidebar-kat-chip {
     display: inline-flex;
     align-items: center;
     gap: 5px;
     padding: 5px 12px;
-    border-radius: 999px;
-    border: 1.5px solid var(--r-border);
+    border-radius: var(--r-radius-xs);
+    border: 1px solid var(--r-border);
     background: var(--r-card);
-    color: var(--r-text);
+    color: var(--r-text-secondary);
     font-size: 0.72rem;
     font-weight: 600;
     text-decoration: none;
@@ -287,7 +348,7 @@ function recept_single_inline_styles() {
     background: var(--r-bg);
     color: var(--r-text-muted);
     padding: 1px 6px;
-    border-radius: 999px;
+    border-radius: var(--r-radius-xs);
     font-weight: 700;
 }
 .sidebar-kat-chip--all {
@@ -296,34 +357,49 @@ function recept_single_inline_styles() {
     border-color: var(--r-accent);
     width: 100%;
     justify-content: center;
-    margin-top: 2px;
+    margin-top: 4px;
 }
-.sidebar-kat-chip--all:hover { background: var(--r-accent-dark); color: #fff; }
+.sidebar-kat-chip--all:hover { background: var(--r-accent-dark); border-color: var(--r-accent-dark); color: #fff; }
 
-/* ═══ FŐ TARTALOM ═══ */
+/* ═══════════════════════════════════════════════
+   MAIN CONTENT – section card system
+   ═══════════════════════════════════════════════ */
 .recept-main-content { min-width: 0; }
+
 .recept-content-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 28px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    overflow: visible;
+}
+
+.recept-section {
     background: var(--r-card);
     border-radius: var(--r-radius);
-    box-shadow: var(--r-shadow-lg);
     border: 1px solid var(--r-border);
+    box-shadow: var(--r-shadow);
     overflow: hidden;
-    margin-bottom: 32px;
 }
 
 .recept-section-header {
-    background: var(--r-accent);
-    color: #fff;
-    padding: 14px 24px;
+    padding: 16px 24px;
     margin: 0;
-    font-size: 0.92rem;
+    font-size: 0.82rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    border-top: 1px solid rgba(255,255,255,0.15);
+    letter-spacing: 0.06em;
+    color: var(--r-text);
+    background: var(--r-bg);
+    border-bottom: 1px solid var(--r-border);
     display: flex;
     align-items: center;
     gap: 12px;
+    border-top: none;
 }
 .recept-section:first-child .recept-section-header {
     border-top: none;
@@ -331,29 +407,30 @@ function recept_single_inline_styles() {
 }
 .recept-section-body {
     padding: 24px;
-    border-bottom: 1px solid var(--r-border);
 }
 .recept-section:last-child .recept-section-body { border-bottom: none; }
 .recept-section-body--lepesek { padding: 0; }
 .recept-content-wrap h2 { all: unset; display: block; }
 
-/* ═══ TOOLBAR ═══ */
+/* ═══════════════════════════════════════════════
+   TOOLBAR (print / share buttons)
+   ═══════════════════════════════════════════════ */
 .hozzavalo-toolbar {
     display: flex;
-    gap: 6px;
-    padding: 10px 24px;
-    background: var(--r-bg);
+    gap: 8px;
+    padding: 12px 24px;
+    background: var(--r-card);
     border-bottom: 1px solid var(--r-border);
 }
 .toolbar-btn {
     display: inline-flex;
     align-items: center;
-    gap: 5px;
-    padding: 6px 14px;
-    border-radius: 999px;
-    border: 1.5px solid var(--r-border);
+    gap: 6px;
+    padding: 7px 16px;
+    border-radius: var(--r-radius-xs);
+    border: 1px solid var(--r-border);
     background: var(--r-card);
-    color: var(--r-text);
+    color: var(--r-text-secondary);
     font-size: 0.75rem;
     font-weight: 600;
     cursor: pointer;
@@ -364,14 +441,17 @@ function recept_single_inline_styles() {
     color: var(--r-accent-dark);
     background: var(--r-accent-soft);
 }
+.toolbar-btn:focus-visible { box-shadow: var(--r-focus-ring); outline: none; }
 
-/* ═══ ADAG STEPPER v3 ═══ */
+/* ═══════════════════════════════════════════════
+   ADAG STEPPER
+   ═══════════════════════════════════════════════ */
 .adag-stepper {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
-    margin-bottom: 22px;
+    gap: 8px;
+    margin-bottom: 24px;
 }
 .adag-stepper-label {
     font-size: 0.68rem;
@@ -383,15 +463,15 @@ function recept_single_inline_styles() {
 .adag-stepper-controls {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
 }
 .adag-stepper-btn {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    border: 2px solid var(--r-accent);
+    border: 1.5px solid var(--r-border);
     background: var(--r-card);
-    color: var(--r-accent);
+    color: var(--r-text-muted);
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -405,30 +485,30 @@ function recept_single_inline_styles() {
     height: 14px;
 }
 .adag-stepper-btn svg line {
-    stroke: var(--r-accent);
+    stroke: var(--r-text-muted);
     stroke-width: 2.5;
     stroke-linecap: round;
+    transition: stroke var(--r-transition);
 }
 .adag-stepper-btn:hover {
     background: var(--r-accent);
+    border-color: var(--r-accent);
     color: #fff;
 }
-.adag-stepper-btn:hover svg line {
-    stroke: #fff;
-}
-.adag-stepper-btn:active {
-    transform: scale(0.9);
-}
+.adag-stepper-btn:hover svg line { stroke: #fff; }
+.adag-stepper-btn:active { transform: scale(0.92); }
+.adag-stepper-btn:focus-visible { box-shadow: var(--r-focus-ring); outline: none; }
+
 .adag-stepper-controls input#adagok-input {
-    width: 48px;
-    height: 48px;
+    width: 52px;
+    height: 52px;
     text-align: center;
-    border: 2px solid var(--r-border);
-    border-radius: 50%;
+    border: 1.5px solid var(--r-border);
+    border-radius: var(--r-radius-sm);
     background: var(--r-card);
     font-weight: 800;
-    font-size: 1.2rem;
-    color: var(--r-accent-dark);
+    font-size: 1.25rem;
+    color: var(--r-text);
     padding: 0;
     -moz-appearance: textfield;
     transition: all var(--r-transition);
@@ -441,92 +521,144 @@ function recept_single_inline_styles() {
 .adag-stepper-controls input#adagok-input:focus {
     outline: none;
     border-color: var(--r-accent);
-    box-shadow: 0 0 0 3px var(--r-accent-glow);
+    box-shadow: var(--r-focus-ring);
 }
 
-/* ═══ ÖSSZETEVŐK ═══ */
+/* ═══════════════════════════════════════════════
+   ÖSSZETEVŐK LISTA
+   ═══════════════════════════════════════════════ */
 .recept-osszetevok { list-style: none; margin: 0; padding: 0; }
 .osszetevo-sor {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 8px 12px;
-    border-radius: var(--r-radius-sm);
+    gap: 12px;
+    padding: 10px 16px;
     transition: all var(--r-transition);
     border-left: 3px solid transparent;
+    border-bottom: 1px solid var(--r-border-light);
 }
-.osszetevo-sor:nth-child(odd) { background: var(--r-bg); }
-.osszetevo-sor:hover { background: var(--r-accent-soft); }
-.osszetevo-sor.is-modified { border-left-color: var(--r-accent); background: var(--r-accent-soft); }
+.osszetevo-sor:last-child { border-bottom: none; }
+.osszetevo-sor:hover { background: var(--r-bg); }
+.osszetevo-sor.is-modified {
+    border-left-color: var(--r-accent);
+    background: var(--r-accent-soft);
+}
 .osszetevo-checkbox-label { flex-shrink: 0; display: flex; align-items: center; cursor: pointer; }
-.osszetevo-checkbox-label input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--r-accent); cursor: pointer; }
-.osszetevo-mennyiseg-wrap { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.osszetevo-checkbox-label input[type="checkbox"] {
+    width: 18px; height: 18px;
+    accent-color: var(--r-accent);
+    cursor: pointer;
+    border-radius: 4px;
+}
+.osszetevo-checkbox-label input[type="checkbox"]:focus-visible { outline: 2px solid var(--r-accent); outline-offset: 2px; }
+.osszetevo-mennyiseg-wrap { display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
 .osszetevo-mennyiseg-input {
-    width: 62px; padding: 5px 8px;
+    width: 64px;
+    padding: 6px 8px;
     border: 1px solid var(--r-border);
-    border-radius: var(--r-radius-sm);
+    border-radius: var(--r-radius-xs);
     text-align: center;
-    font-size: 0.9rem; font-weight: 600;
-    background: #fff;
+    font-size: 0.88rem;
+    font-weight: 600;
+    background: var(--r-card);
     transition: all var(--r-transition);
     font-variant-numeric: tabular-nums;
     -moz-appearance: textfield;
+    color: var(--r-text);
 }
 .osszetevo-mennyiseg-input::-webkit-outer-spin-button,
 .osszetevo-mennyiseg-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-.osszetevo-mennyiseg-input:focus { outline: none; border-color: var(--r-accent); box-shadow: 0 0 0 3px var(--r-accent-glow); }
-.osszetevo-mertekegyseg { font-size: 0.82rem; color: var(--r-text-muted); font-weight: 600; min-width: 22px; }
-.osszetevo-nev { font-size: 0.95rem; flex: 1; }
-.osszetevo-nev em { color: var(--r-text-muted); font-size: 0.85rem; }
-.osszetevo-sor:has(input[type="checkbox"]:checked) .osszetevo-nev { text-decoration: line-through; opacity: 0.4; }
-.osszetevo-sor:has(input[type="checkbox"]:checked) .osszetevo-mennyiseg-input { opacity: 0.4; }
+.osszetevo-mennyiseg-input:focus {
+    outline: none;
+    border-color: var(--r-accent);
+    box-shadow: var(--r-focus-ring);
+}
+.osszetevo-mertekegyseg {
+    font-size: 0.8rem;
+    color: var(--r-text-muted);
+    font-weight: 600;
+    min-width: 24px;
+}
+.osszetevo-nev {
+    font-size: 0.92rem;
+    flex: 1;
+    color: var(--r-text);
+    line-height: 1.4;
+}
+.osszetevo-nev em { color: var(--r-text-muted); font-size: 0.82rem; font-style: italic; }
+.osszetevo-sor:has(input[type="checkbox"]:checked) .osszetevo-nev {
+    text-decoration: line-through;
+    opacity: 0.35;
+}
+.osszetevo-sor:has(input[type="checkbox"]:checked) .osszetevo-mennyiseg-input { opacity: 0.35; }
+.osszetevo-sor:has(input[type="checkbox"]:checked) .osszetevo-mertekegyseg { opacity: 0.35; }
 
+/* ═══════════════════════════════════════════════
+   RESET BUTTON
+   ═══════════════════════════════════════════════ */
 .alaphelyzet-btn {
     display: block;
-    margin: 18px auto 0;
-    background: none;
-    border: 2px solid var(--r-border);
+    margin: 20px auto 0;
+    background: var(--r-card);
+    border: 1px solid var(--r-border);
     padding: 8px 24px;
-    border-radius: 999px;
-    font-size: 0.82rem; font-weight: 700;
+    border-radius: var(--r-radius-xs);
+    font-size: 0.78rem;
+    font-weight: 600;
     color: var(--r-text-muted);
     cursor: pointer;
     transition: all var(--r-transition);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
     opacity: 0;
     pointer-events: none;
     transform: translateY(-6px);
 }
 .alaphelyzet-btn.is-visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
-.alaphelyzet-btn:hover { border-color: #e74c3c; color: #e74c3c; background: rgba(231,76,60,0.06); }
+.alaphelyzet-btn:hover { border-color: #dc2626; color: #dc2626; background: rgba(220,38,38,0.04); }
+.alaphelyzet-btn:focus-visible { box-shadow: var(--r-focus-ring); outline: none; }
 
-/* ═══ MAKRÓ STRIP ═══ */
-.recept-section-body--makro { padding: 16px 24px; }
+/* ═══════════════════════════════════════════════
+   MAKRÓ – card grid
+   ═══════════════════════════════════════════════ */
+.recept-section-body--makro { padding: 20px 24px; }
+
 .makro-warning {
-    background: rgba(231,76,60,0.07);
-    border-left: 3px solid #e74c3c;
-    padding: 8px 14px;
-    margin-bottom: 12px;
+    background: rgba(220, 38, 38, 0.05);
+    border-left: 3px solid #dc2626;
+    padding: 10px 16px;
+    margin-bottom: 14px;
     font-size: 0.82rem;
-    border-radius: 0 var(--r-radius-sm) var(--r-radius-sm) 0;
-    color: #c0392b;
+    border-radius: 0 var(--r-radius-xs) var(--r-radius-xs) 0;
+    color: #991b1b;
+    line-height: 1.5;
 }
+
 .makro-strip {
-    display: flex;
-    align-items: center;
-    gap: 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
 }
+.makro-strip-divider { display: none; }
+
 .makro-strip-item {
-    flex: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 1px;
-    padding: 8px 4px;
+    gap: 4px;
+    padding: 16px 8px;
+    background: var(--r-bg);
+    border: 1px solid var(--r-border-light);
+    border-radius: var(--r-radius-sm);
+    transition: border-color var(--r-transition);
 }
+.makro-strip-item:hover { border-color: var(--r-border); }
+
+.makro-strip-item:first-child {
+    background: var(--r-accent-soft);
+    border-color: var(--r-accent-light);
+}
+
 .makro-strip-value {
-    font-size: 1.35rem;
+    font-size: 1.3rem;
     font-weight: 800;
     color: var(--r-text);
     line-height: 1;
@@ -534,95 +666,90 @@ function recept_single_inline_styles() {
 }
 .makro-strip-item:first-child .makro-strip-value {
     color: var(--r-accent-dark);
-    font-size: 1.5rem;
+    font-size: 1.45rem;
 }
 .makro-strip-label {
-    font-size: 0.65rem;
+    font-size: 0.62rem;
     text-transform: uppercase;
-    letter-spacing: 0.06em;
+    letter-spacing: 0.05em;
     color: var(--r-text-muted);
     font-weight: 600;
+    text-align: center;
 }
 .makro-strip-pct {
     font-size: 0.68rem;
     font-weight: 700;
     color: var(--r-accent-dark);
-    background: var(--r-accent-soft);
-    padding: 1px 8px;
-    border-radius: 999px;
+    background: var(--r-accent-light);
+    padding: 2px 10px;
+    border-radius: var(--r-radius-xs);
     margin-top: 2px;
 }
-.makro-strip-divider {
-    width: 1px;
-    height: 36px;
-    background: var(--r-border);
-    flex-shrink: 0;
-}
+
+/* Per-adag row */
 .makro-per-adag {
     display: none;
     text-align: center;
-    margin-top: 10px;
-    padding: 8px 14px;
+    margin-top: 14px;
+    padding: 10px 16px;
     background: var(--r-bg);
-    border-radius: var(--r-radius-sm);
+    border-radius: var(--r-radius-xs);
     font-size: 0.78rem;
     color: var(--r-text-muted);
+    border: 1px solid var(--r-border-light);
 }
 .makro-per-adag strong { color: var(--r-text); font-weight: 700; }
 
-/* ═══ MAKRÓ INFO-BOX ═══ */
+/* ═══════════════════════════════════════════════
+   MAKRÓ INFO-BOX
+   ═══════════════════════════════════════════════ */
 .makro-info {
     margin-top: 14px;
     padding: 12px 16px 12px 18px;
     background: var(--r-bg);
     border-left: 3px solid var(--r-accent);
-    border-radius: 0 var(--r-radius-sm) var(--r-radius-sm) 0;
-    font-size: 0.78rem;
+    border-radius: 0 var(--r-radius-xs) var(--r-radius-xs) 0;
+    font-size: 0.76rem;
     line-height: 1.55;
     color: var(--r-text-muted);
 }
 .makro-info p { margin: 0; }
-.makro-info p + p { margin-top: 6px; }
-.makro-info strong {
-    color: var(--r-accent-dark);
-    font-weight: 700;
-}
-.makro-info-factors {
-    font-size: 0.72rem;
-    letter-spacing: 0.01em;
-    opacity: 0.85;
-}
+.makro-info p + p { margin-top: 5px; }
+.makro-info strong { color: var(--r-accent-dark); font-weight: 700; }
+.makro-info-factors { font-size: 0.7rem; opacity: 0.8; }
 
-/* ═══ PROGRESS BAR ═══ */
+/* ═══════════════════════════════════════════════
+   PROGRESS BAR (in Elkészítés header)
+   ═══════════════════════════════════════════════ */
 .elkeszites-progress-wrap {
     flex: 1;
-    height: 8px;
+    height: 6px;
     min-width: 80px;
-    background: rgba(255,255,255,0.2);
+    background: var(--r-border);
     border-radius: 999px;
     overflow: hidden;
     margin-left: 8px;
-    border: 1px solid rgba(255,255,255,0.15);
 }
 .elkeszites-progress-bar {
     display: block;
     height: 100%;
     width: 0%;
-    background: #fff;
+    background: var(--r-accent);
     border-radius: 999px;
     transition: width 0.4s ease;
-    box-shadow: 0 0 6px rgba(255,255,255,0.5);
 }
 .elkeszites-progress-text {
-    font-size: 0.72rem;
-    font-weight: 800;
-    opacity: 0.9;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--r-accent-dark);
     min-width: 36px;
     text-align: right;
     flex-shrink: 0;
 }
 
-/* ═══ ELKÉSZÍTÉS LÉPÉSEK ═══ */
+/* ═══════════════════════════════════════════════
+   ELKÉSZÍTÉS LÉPÉSEK
+   ═══════════════════════════════════════════════ */
 .recept-lepesek {
     counter-reset: lepes;
     list-style: none;
@@ -631,22 +758,23 @@ function recept_single_inline_styles() {
 }
 .recept-lepesek li {
     position: relative;
-    padding: 18px 20px 18px 60px;
-    border-bottom: 1px solid var(--r-border);
-    font-size: 0.95rem;
-    line-height: 1.65;
+    padding: 20px 24px 20px 64px;
+    border-bottom: 1px solid var(--r-border-light);
+    font-size: 0.92rem;
+    line-height: 1.7;
     transition: all var(--r-transition);
     cursor: pointer;
+    color: var(--r-text-secondary);
 }
 .recept-lepesek li:last-child { border-bottom: none; }
-.recept-lepesek li:hover { background: var(--r-accent-soft); }
+.recept-lepesek li:hover { background: var(--r-bg); }
 
 .recept-lepesek li::before {
     counter-increment: lepes;
     content: counter(lepes);
     position: absolute;
-    left: 18px;
-    top: 18px;
+    left: 20px;
+    top: 20px;
     width: 30px;
     height: 30px;
     border-radius: 50%;
@@ -656,12 +784,12 @@ function recept_single_inline_styles() {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.82rem;
+    font-size: 0.78rem;
     transition: background var(--r-transition);
 }
 
 .recept-lepesek li.lepes-done {
-    opacity: 0.45;
+    opacity: 0.4;
 }
 .recept-lepesek li.lepes-done .lepes-text {
     text-decoration: line-through;
@@ -672,8 +800,8 @@ function recept_single_inline_styles() {
 .recept-lepesek li.lepes-done::after {
     content: '';
     position: absolute;
-    left: 18px;
-    top: 18px;
+    left: 20px;
+    top: 20px;
     width: 30px;
     height: 30px;
     border-radius: 50%;
@@ -694,30 +822,51 @@ function recept_single_inline_styles() {
 }
 .lepes-text { display: block; }
 
+/* ═══════════════════════════════════════════════
+   TARTALOM (WP editor content block)
+   ═══════════════════════════════════════════════ */
 .recept-tartalom {
     background: var(--r-card);
     border-radius: var(--r-radius);
     box-shadow: var(--r-shadow);
     border: 1px solid var(--r-border);
-    padding: 24px;
-    line-height: 1.7;
+    padding: 28px;
+    line-height: 1.75;
     font-size: 0.95rem;
+    color: var(--r-text-secondary);
 }
 
-/* ═══ ANIMÁCIÓ ═══ */
+/* ═══════════════════════════════════════════════
+   ENTRANCE ANIMATION
+   ═══════════════════════════════════════════════ */
 @keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(14px); }
+    from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: translateY(0); }
 }
 .recept-single article > * {
-    animation: fadeInUp 0.35s ease-out both;
+    animation: fadeInUp 0.3s ease-out both;
 }
 
-/* ═══ RESPONSIVE ═══ */
-@media (max-width: 900px) {
+/* ═══════════════════════════════════════════════
+   RESPONSIVE – 1024
+   ═══════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+    .recept-layout {
+        grid-template-columns: 240px 1fr;
+        gap: 20px;
+    }
+}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE – 768
+   ═══════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    .recept-single { padding: 0 16px 32px; }
+
     .recept-layout { grid-template-columns: 1fr; }
     .recept-sidebar { position: static; order: 2; }
     .recept-main-content { order: 1; }
+
     .sidebar-cards {
         flex-direction: row;
         overflow-x: auto;
@@ -733,57 +882,99 @@ function recept_single_inline_styles() {
         padding: 12px;
         text-align: center;
         border-bottom: none;
-        border-right: 1px solid var(--r-border);
+        border-right: 1px solid var(--r-border-light);
     }
     .sidebar-card:last-child { border-right: none; }
-    .sidebar-card-img { width: 100%; height: 80px; border-radius: 8px; }
-    .recept-hero { height: 260px; }
+    .sidebar-card-img { width: 100%; height: 80px; border-radius: var(--r-radius-xs); }
+
+    .recept-hero {
+        height: 260px;
+        border-radius: 0;
+        margin-left: -16px;
+        margin-right: -16px;
+        width: calc(100% + 32px);
+    }
+    .recept-hero-overlay { padding: 24px 20px; }
+    .recept-hero-overlay h1 { font-size: 1.45rem; }
+
+    .recept-meta { flex-direction: column; }
+    .recept-meta p { border-right: none; border-bottom: 1px solid var(--r-border-light); }
+    .recept-meta p:last-child { border-bottom: none; }
+
+    .recept-section-body { padding: 20px; }
+    .recept-section-body--makro { padding: 16px 20px; }
+
+    .makro-strip {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+    }
+
+    .hozzavalo-toolbar { padding: 10px 20px; gap: 6px; flex-wrap: wrap; }
+    .toolbar-btn { font-size: 0.72rem; padding: 6px 12px; }
 }
 
-@media (max-width: 768px) {
+/* ═══════════════════════════════════════════════
+   RESPONSIVE – 480
+   ═══════════════════════════════════════════════ */
+@media (max-width: 480px) {
     .recept-single { padding: 0 12px 24px; }
-    .recept-meta { flex-direction: column; }
-    .recept-meta p { border-right: none; border-bottom: 1px solid var(--r-border); }
-    .recept-meta p:last-child { border-bottom: none; }
-    .recept-section-body { padding: 18px; }
-    .recept-section-body--makro { padding: 12px 18px; }
+
     .recept-hero {
-        height: 220px;
-        border-radius: 0;
+        height: 200px;
         margin-left: -12px;
         margin-right: -12px;
         width: calc(100% + 24px);
     }
-    .recept-hero-overlay { padding: 20px; }
-    .recept-hero-overlay h1 { font-size: 1.4rem; }
-    .hozzavalo-toolbar { padding: 8px 18px; gap: 4px; flex-wrap: wrap; }
-    .toolbar-btn { font-size: 0.7rem; padding: 5px 10px; }
-    .makro-strip { flex-wrap: wrap; }
-    .makro-strip-item { min-width: 45%; }
-    .makro-strip-divider { display: none; }
-}
+    .recept-hero-overlay { padding: 16px; }
+    .recept-hero-overlay h1 { font-size: 1.25rem; }
 
-@media (max-width: 480px) {
-    .osszetevo-mennyiseg-input { width: 52px; font-size: 0.85rem; }
-    .recept-section-header { font-size: 0.82rem; padding: 12px 18px; }
+    .recept-section-header { font-size: 0.76rem; padding: 14px 18px; }
+    .recept-section-body { padding: 16px; }
+    .recept-section-body--makro { padding: 14px 16px; }
+
+    .osszetevo-sor { gap: 8px; padding: 8px 12px; }
+    .osszetevo-mennyiseg-input { width: 54px; font-size: 0.82rem; padding: 5px 6px; }
+    .osszetevo-nev { font-size: 0.85rem; }
+
+    .makro-strip { gap: 8px; }
+    .makro-strip-item { padding: 12px 6px; }
+    .makro-strip-value { font-size: 1.1rem; }
+    .makro-strip-item:first-child .makro-strip-value { font-size: 1.2rem; }
+    .makro-strip-label { font-size: 0.58rem; }
+    .makro-strip-pct { font-size: 0.62rem; padding: 1px 7px; }
+
     .makro-per-adag { font-size: 0.72rem; }
-    .sidebar-card { flex: 0 0 160px; }
-    .recept-hero { height: 180px; }
-    .adag-stepper-btn { width: 32px; height: 32px; }
-    .adag-stepper-controls input#adagok-input { width: 42px; height: 42px; font-size: 1.05rem; }
-    .adag-stepper-controls { gap: 8px; }
+    .makro-info { font-size: 0.7rem; padding: 10px 14px 10px 16px; }
+
+    .recept-lepesek li { padding: 16px 16px 16px 56px; font-size: 0.88rem; }
+    .recept-lepesek li::before { left: 14px; top: 16px; width: 28px; height: 28px; font-size: 0.72rem; }
+    .recept-lepesek li.lepes-done::after { left: 14px; top: 16px; width: 28px; height: 28px; }
+
+    .sidebar-card { flex: 0 0 170px; }
+
+    .adag-stepper-btn { width: 34px; height: 34px; }
+    .adag-stepper-controls input#adagok-input { width: 46px; height: 46px; font-size: 1.1rem; }
+    .adag-stepper-controls { gap: 10px; }
+
+    .hozzavalo-toolbar { padding: 8px 16px; }
+    .toolbar-btn { font-size: 0.68rem; padding: 5px 10px; }
 }
 
+/* ═══════════════════════════════════════════════
+   PRINT
+   ═══════════════════════════════════════════════ */
 @media print {
     .recept-single { max-width: 100%; margin: 0; padding: 0; }
     .alaphelyzet-btn,
     .makro-warning,
+    .makro-info,
     .recept-sidebar,
     .share-panel,
     .recept-toast,
     .hozzavalo-toolbar { display: none !important; }
     .recept-layout { grid-template-columns: 1fr; }
-    .recept-content-wrap { box-shadow: none; }
+    .recept-section { box-shadow: none; border: 1px solid #ddd; }
+    .recept-content-wrap { gap: 0; }
     .recept-single article > * { animation: none !important; }
     .osszetevo-mennyiseg-input { border: none; background: none; }
     .recept-lepesek li.lepes-done { opacity: 1; text-decoration: none; }
