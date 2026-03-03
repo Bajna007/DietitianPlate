@@ -1,16 +1,5 @@
-<?php
 
-/**
- * 32 -  Auth modal + profil + header auth CSS
- */
-/**
- * 32 -  Auth modal + profil + header auth CSS
- */
-/**
- * 32 -  Auth modal + profil + header auth CSS
- */
-/**
- * 32 – Auth modal + header auth CSS
+ /* 32 – Auth modal + header auth CSS
  * v9.2 – GDPR checkbox CSS kiszedve + dp-auth-legal dizájn (checkbox nélkül)
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
