@@ -148,7 +148,7 @@ $g_md   = $goal && is_array( $goal->meal_distribution ) ? $goal->meal_distributi
                 <div class="dg-field"><label class="dg-field-label">Nem</label><select id="cj-m-gender" class="dg-input"><option value="male" <?php selected( $gender, 'male' ); ?>>Férfi</option><option value="female" <?php selected( $gender, 'female' ); ?>>Nő</option></select></div>
             </div>
             <div class="dg-row" style="grid-template-columns:1fr 1fr;margin-top:12px">
-                <div class="dg-field"><label class="dg-field-label">Képlet</label><select id="cj-m-formula" class="dg-input"><option value="mifflin" <?php selected( $formula, 'mifflin' ); ?>>Mifflin-St Jeor (1990)</option><option value="harris" <?php selected( $formula, 'harris' ); ?>>Harris-Benedict (1919)</option><option value="roza" <?php selected( $formula, 'roza' ); ?>>Roza & Shizgal (1984)</option></select></div>
+                <div class="dg-field"><label class="dg-field-label">Képlet</label><select id="cj-m-formula" class="dg-input"><option value="mifflin" <?php selected( $formula, 'mifflin' ); ?>>Mifflin-St Jeor (1990)</option><option value="harris" <?php selected( $formula, 'harris' ); ?>>Harris-Benedict (1919)</option><option value="roza" <?php selected( $formula, 'roza' ); ?>>Roza & Shizgal (1984)</option><option value="manual_input" <?php selected( $formula, 'manual_input' ); ?>>Manuális bevitel</option></select></div>
                 <div class="dg-field"><label class="dg-field-label">Aktivitás</label><select id="cj-m-act" class="dg-input">
                     <option value="1.2" <?php selected( round( $activity, 3 ), '1.2' ); ?>>Ülő (×1.2)</option>
                     <option value="1.375" <?php selected( round( $activity, 3 ), '1.375' ); ?>>Enyhén aktív (×1.375)</option>
@@ -159,6 +159,22 @@ $g_md   = $goal && is_array( $goal->meal_distribution ) ? $goal->meal_distributi
                     <option value="2.3" <?php selected( round( $activity, 3 ), '2.3' ); ?>>Sportoló – versenyző (×2.3)</option>
                     <option value="2.5" <?php selected( round( $activity, 3 ), '2.5' ); ?>>Sportoló – élsportoló (×2.5)</option>
                 </select></div>
+            </div>
+            <div id="cj-manual-kcal-fields" class="dg-row" style="grid-template-columns:1fr 1fr;margin-top:12px;display:none">
+                <div class="dg-field">
+                    <label class="dg-field-label">Napi kcal bevitel</label>
+                    <div class="dg-field-wrap">
+                        <input type="number" id="cj-m-kcal" class="dg-input" value="" min="800" max="15000" step="1">
+                        <span class="dg-input-unit">kcal</span>
+                    </div>
+                </div>
+                <div class="dg-field">
+                    <label class="dg-field-label">kcal / testtömeg-kg</label>
+                    <div class="dg-field-wrap">
+                        <input type="number" id="cj-m-kcalpkg" class="dg-input" value="" min="10" max="80" step="0.1">
+                        <span class="dg-input-unit">kcal/ttkg</span>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="cj-origin-footer"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>Az importált adatok a <a href="/bmr-kalkulator">Kalória Kalkulátorból</a> származnak. A manuális módban itt helyben módosíthatsz mindent.</span></div>
@@ -247,15 +263,15 @@ $g_md   = $goal && is_array( $goal->meal_distribution ) ? $goal->meal_distributi
         <div class="dg-macro-grid">
             <div class="dg-mc dg-mc--prot">
                 <div class="dg-mc-head"><span class="dg-mc-name"><span class="dg-mc-dot"></span>Fehérje</span><span class="dg-mc-pct" id="dg-p-pct"></span></div>
-                <div class="dg-mc-body"><input type="range" id="dg-prot-sl" class="dg-slider" min="10" max="50" step="1" value="25" disabled><div class="dg-mc-vals"><span class="dg-mc-gram" id="dg-p-g">0<small> g</small></span><span class="dg-mc-perkg" id="dg-p-pk"></span></div></div>
+                <div class="dg-mc-body"><input type="range" id="dg-prot-sl" class="dg-slider" min="10" max="50" step="1" value="25" disabled><div class="dg-mc-vals"><span class="dg-mc-gram" id="dg-p-g">0<small> g</small></span><span class="dg-mc-perkg" id="dg-p-pk"></span></div><div class="dg-mc-custom-pkg" id="dg-p-pkg-wrap" style="display:none;margin-top:6px"><div class="dg-field-wrap" style="max-width:180px"><input type="number" id="dg-p-pkg-input" class="dg-input" min="0" max="5" step="0.1" placeholder="g/ttkg" style="font-size:14px;padding:6px 10px"><span class="dg-input-unit">g/ttkg</span></div></div></div>
             </div>
             <div class="dg-mc dg-mc--fat">
                 <div class="dg-mc-head"><span class="dg-mc-name"><span class="dg-mc-dot"></span>Zsír</span><span class="dg-mc-pct" id="dg-f-pct"></span></div>
-                <div class="dg-mc-body"><input type="range" id="dg-fat-sl" class="dg-slider" min="15" max="50" step="1" value="30" disabled><div class="dg-mc-vals"><span class="dg-mc-gram" id="dg-f-g">0<small> g</small></span><span class="dg-mc-perkg" id="dg-f-pk"></span></div></div>
+                <div class="dg-mc-body"><input type="range" id="dg-fat-sl" class="dg-slider" min="15" max="50" step="1" value="30" disabled><div class="dg-mc-vals"><span class="dg-mc-gram" id="dg-f-g">0<small> g</small></span><span class="dg-mc-perkg" id="dg-f-pk"></span></div><div class="dg-mc-custom-pkg" id="dg-f-pkg-wrap" style="display:none;margin-top:6px"><div class="dg-field-wrap" style="max-width:180px"><input type="number" id="dg-f-pkg-input" class="dg-input" min="0" max="5" step="0.1" placeholder="g/ttkg" style="font-size:14px;padding:6px 10px"><span class="dg-input-unit">g/ttkg</span></div></div></div>
             </div>
             <div class="dg-mc dg-mc--carb">
                 <div class="dg-mc-head"><span class="dg-mc-name"><span class="dg-mc-dot"></span>Szénhidrát <small style="font-weight:400;color:var(--dg-text-muted)">(maradék)</small></span><span class="dg-mc-pct" id="dg-c-pct"></span></div>
-                <div class="dg-mc-body"><input type="range" id="dg-carb-sl" class="dg-slider" min="10" max="70" step="1" value="45" disabled><div class="dg-mc-vals"><span class="dg-mc-gram" id="dg-c-g">0<small> g</small></span><span class="dg-mc-perkg" id="dg-c-pk"></span></div></div>
+                <div class="dg-mc-body"><input type="range" id="dg-carb-sl" class="dg-slider" min="10" max="70" step="1" value="45" disabled><div class="dg-mc-vals"><span class="dg-mc-gram" id="dg-c-g">0<small> g</small></span><span class="dg-mc-perkg" id="dg-c-pk"></span></div><div class="dg-mc-custom-pkg" id="dg-c-pkg-wrap" style="display:none;margin-top:6px"><div class="dg-field-wrap" style="max-width:180px"><input type="number" id="dg-c-pkg-input" class="dg-input" min="0" max="5" step="0.1" placeholder="g/ttkg" style="font-size:14px;padding:6px 10px"><span class="dg-input-unit">g/ttkg</span></div></div></div>
             </div>
         </div>
         <div class="dg-macro-bar">
