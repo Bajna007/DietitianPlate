@@ -4,7 +4,7 @@
  * 12 - Recept CSS (single-recept)
  */
 /**
- * 12 - Recept CSS (single-recept) – CLEAN FINAL
+ * 12 - Recept CSS (single-recept) – CLEAN FINAL v2
  */
 function recept_single_inline_styles() {
     if ( ! is_singular( 'recept' ) ) { return; }
@@ -436,12 +436,69 @@ html, body { overflow-x: hidden; }
     background: var(--r-accent-light); padding: 4px 14px; border-radius: 100px;
     line-height: 1; margin-top: auto;
 }
+
+/* ★ "1 ADAG" KÁRTYÁS MEGJELENÍTÉS ★ */
 .recept-single .makro-per-adag {
-    display: none; text-align: center; margin-top: 14px; padding: 10px 16px;
-    background: #f9fafb; border-radius: var(--r-radius-xs); font-size: 0.78rem;
-    color: #4b5563; border: 1px solid #e5e7eb;
+    display: none;
+    margin-top: 16px;
+    padding: 14px 20px 16px;
+    background: linear-gradient(135deg, #f0f7f4 0%, #f9fafb 100%);
+    border: 1px solid #d4e7dd;
+    border-radius: var(--r-radius-sm);
+    text-align: center;
 }
-.recept-single .makro-per-adag strong { color: #111827; }
+.per-adag-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--r-accent-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 12px;
+}
+.per-adag-header svg { opacity: 0.7; }
+.per-adag-grid {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+}
+.per-adag-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 16px;
+    min-width: 64px;
+}
+.per-adag-value {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #111827;
+    line-height: 1.2;
+}
+.per-adag-value small {
+    font-size: 0.6em;
+    font-weight: 600;
+    color: var(--r-text-muted);
+    margin-left: 1px;
+}
+.per-adag-label {
+    font-size: 0.62rem;
+    font-weight: 600;
+    color: var(--r-text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    margin-top: 3px;
+}
+.per-adag-sep {
+    width: 1px;
+    height: 32px;
+    background: #d4e7dd;
+    flex-shrink: 0;
+}
+
 .makro-info {
     margin-top: 14px; padding: 12px 16px 12px 18px; background: var(--r-bg);
     border-left: 3px solid var(--r-accent); border-radius: 0 var(--r-radius-xs) var(--r-radius-xs) 0;
@@ -522,6 +579,11 @@ html, body { overflow-x: hidden; }
     .hozzavalo-toolbar { padding: 10px 20px; gap: 6px; }
     .toolbar-btn { font-size: 0.72rem; padding: 6px 12px; }
     .osszetevo-reszletek-text { display: none; }
+
+    /* ★ 1 adag kártya – tablet ★ */
+    .per-adag-item { padding: 0 12px; min-width: 56px; }
+    .per-adag-value { font-size: 1.05rem; }
+    .per-adag-sep { height: 28px; }
 }
 
 /* RESPONSIVE 480 */
@@ -553,6 +615,14 @@ html, body { overflow-x: hidden; }
     .toolbar-btn { font-size: 0.68rem; padding: 5px 10px; }
     .osszetevo-reszletek { padding: 3px 8px 3px 6px; }
     .osszetevo-reszletek-text { display: none; }
+
+    /* ★ 1 adag kártya – mobil ★ */
+    .recept-single .makro-per-adag { padding: 12px 14px 14px; }
+    .per-adag-grid { flex-wrap: wrap; gap: 8px 0; }
+    .per-adag-item { padding: 0 10px; min-width: 50px; }
+    .per-adag-value { font-size: 0.95rem; }
+    .per-adag-label { font-size: 0.56rem; }
+    .per-adag-sep { height: 24px; }
 }
 
 /* PRINT */
