@@ -64,6 +64,7 @@ define( 'FV2_ROTATION_OPTION',   'fv2_rotation_strategy' );
 define( 'FV2_LAST_BATCH_KEY',    'fv2_last_batch' );
 define( 'FV2_AUTO_LOG_KEY',      'fv2_auto_log' );
 define( 'FV2_AUTO_COUNT_KEY',    'fv2_auto_count' );
+define( 'FV2_NIGHTLY_ENABLED_KEY', 'fv2_nightly_enabled' );
 
 define( 'FV2_LOG_MAX',           500 );
 define( 'FV2_LOCK_TTL',          120 );
@@ -1334,10 +1335,19 @@ function fv2_admin_page() {
             </div>
         </div>
 
-        <div style="margin:0 0 12px;display:flex;gap:8px;">
+        <div style="margin:0 0 12px;display:flex;gap:8px;align-items:center;">
             <button id="fv2-stop" class="button" style="font-size:14px;padding:6px 20px;<?php echo $is_running?'':'display:none;';?>">⏹ Leállítás</button>
             <?php if($can_undo):?><button id="fv2-undo-btn" class="button" style="background:#2563eb;color:#fff;">↩️ Undo (<?php echo count($last_batch['items']);?>)</button><?php endif;?>
             <button id="fv2-export-csv" class="button">📥 CSV</button>
+            <?php $fv2_night_on = get_option( FV2_NIGHTLY_ENABLED_KEY, 'yes' ) === 'yes'; ?>
+            <label style="display:inline-flex;align-items:center;gap:8px;margin-right:16px;font-size:14px;font-weight:600;cursor:pointer;user-select:none;">
+                <span>🌙 Éjféli fordítás</span>
+                <input type="checkbox" id="fv2-nightly-toggle" <?php echo $fv2_night_on ? 'checked' : ''; ?> style="display:none;">
+                <span id="fv2-nightly-toggle-visual" style="display:inline-block;width:40px;height:22px;border-radius:11px;background:<?php echo $fv2_night_on ? '#22c55e' : '#d1d5db'; ?>;position:relative;transition:background 0.25s;cursor:pointer;">
+                    <span style="position:absolute;top:2px;left:<?php echo $fv2_night_on ? '20px' : '2px'; ?>;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.15);transition:left 0.25s;"></span>
+                </span>
+                <span id="fv2-nightly-toggle-label" style="font-size:12px;color:<?php echo $fv2_night_on ? '#16a34a' : '#9ca3af'; ?>;"><?php echo $fv2_night_on ? 'BE' : 'KI'; ?></span>
+            </label>
         </div>
 
         <!-- ═══ EGYEDI FORDÍTÁS ═══ -->
@@ -1481,6 +1491,18 @@ if($('fv2-reset'))$('fv2-reset').addEventListener('click',function(){if(!confirm
 $('fv2-stop').addEventListener('click',function(){this.disabled=true;this.textContent='⏳...';stopRequested=true;ajax('fv2_stop',{},function(){});});
 if($('fv2-undo-btn'))$('fv2-undo-btn').addEventListener('click',function(){if(!confirm('↩️ Visszaállítás?'))return;this.disabled=true;ajax('fv2_undo',{},function(r){alert(r.success?'✅ '+r.data:'❌ '+r.data);location.reload();});});
 $('fv2-export-csv').addEventListener('click',function(){ajax('fv2_export_csv',{},function(r){if(!r.success)return;var b=new Blob(['\uFEFF'+r.data],{type:'text/csv'});var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='fordito_'+new Date().toISOString().slice(0,10)+'.csv';a.click();});});
+
+if(document.getElementById('fv2-nightly-toggle'))document.getElementById('fv2-nightly-toggle').addEventListener('change',function(){
+    var en=this.checked?'yes':'no';
+    var vis=document.getElementById('fv2-nightly-toggle-visual');
+    var lbl=document.getElementById('fv2-nightly-toggle-label');
+    if(vis){vis.style.background=this.checked?'#22c55e':'#d1d5db';vis.children[0].style.left=this.checked?'20px':'2px';}
+    if(lbl){lbl.textContent=this.checked?'BE':'KI';lbl.style.color=this.checked?'#16a34a':'#9ca3af';}
+    var fd=new FormData();fd.append('action','fv2_toggle_nightly');fd.append('nonce',fv2Data.nonce);fd.append('enabled',en);
+    fetch(fv2Data.ajaxUrl,{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(r){
+        if(r.success)console.log(r.data);
+    });
+});
 
 // ── POLLING ──
 function poll(){
@@ -1824,6 +1846,19 @@ function fv2_list_untranslated_handler() {
 }
 add_action( 'wp_ajax_fv2_list_untranslated', 'fv2_list_untranslated_handler' );
 
+add_action( 'wp_ajax_fv2_toggle_nightly', function() {
+    check_ajax_referer( 'fv2_nonce', 'nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Nincs jog.' );
+    $new = ( isset( $_POST['enabled'] ) && $_POST['enabled'] === 'yes' ) ? 'yes' : 'no';
+    update_option( FV2_NIGHTLY_ENABLED_KEY, $new, false );
+    if ( $new === 'yes' ) {
+        fv2_schedule_nightly();
+    } else {
+        wp_clear_scheduled_hook( FV2_NIGHTLY_HOOK );
+    }
+    wp_send_json_success( $new === 'yes' ? 'Éjféli fordítás bekapcsolva.' : 'Éjféli fordítás kikapcsolva.' );
+} );
+
 function fv2_export_csv_handler() {
     check_ajax_referer( 'fv2_nonce', 'nonce' );
     if(!current_user_can('manage_options'))wp_send_json_error('Nincs jog.');
@@ -1882,10 +1917,14 @@ add_action( 'wp_loaded', 'fv2_ensure_cron' );
 // ÉJFÉLI AUTO
 // ══════════════════════════════════════════════════════════════
 
-function fv2_schedule_nightly(){if(!wp_next_scheduled(FV2_NIGHTLY_HOOK))wp_schedule_event(strtotime('tomorrow midnight')+120,'daily',FV2_NIGHTLY_HOOK);}
+function fv2_schedule_nightly(){
+    if(get_option(FV2_NIGHTLY_ENABLED_KEY,'yes')!=='yes'){wp_clear_scheduled_hook(FV2_NIGHTLY_HOOK);return;}
+    if(!wp_next_scheduled(FV2_NIGHTLY_HOOK))wp_schedule_event(strtotime('tomorrow midnight')+120,'daily',FV2_NIGHTLY_HOOK);
+}
 add_action( 'admin_init', 'fv2_schedule_nightly' );
 
 function fv2_nightly_run(){
+    if(get_option(FV2_NIGHTLY_ENABLED_KEY,'yes')!=='yes'){fv2_auto_log('⏭ Éjféli kihagyva – kikapcsolva.');return;}
     $cur=fv2_get_state();
     if(in_array($cur['status'],['running','stopping'])){fv2_auto_log('⏭ Éjféli kihagyva – fut.');return;}
     if(empty(fv2_get_keys())){fv2_auto_log('❌ Nincs kulcs.');return;}
