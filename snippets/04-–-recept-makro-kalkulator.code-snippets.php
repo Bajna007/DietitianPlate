@@ -69,9 +69,10 @@ function recept_calc_enqueue_scripts() {
 
             $alapanyag_nev = is_string( $alapanyag ) ? $alapanyag : '';
 
-            if ( ! $has_macro && ! empty( $alapanyag_nev ) ) {
-                $missing[] = $alapanyag_nev;
-            }
+            // Kikapcsolva – 0 kcal/makrós alapanyagok (víz, só, fűszer) nem hiányzó adat
+            // if ( ! $has_macro && ! empty( $alapanyag_nev ) ) {
+            //     $missing[] = $alapanyag_nev;
+            // }
 
             // Gramm-konverziós szorzó az adott mértékegységhez
             $gramm_szorzo = recept_mertekegyseg_to_gramm( 1, $mertekegyseg );
