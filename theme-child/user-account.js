@@ -1,8 +1,7 @@
-// user-account.js v11 FINAL – PHP-ben renderelt modált használ, GDPR küldve, formázás stabil
+// user-account.js v12 – Turnstile + Google OAuth href fix + dupla bind védelem
 (function () {
   'use strict';
 
-  // Támogatjuk mindkét localize nevet (nálad DP_USER van a PHP-ban)
   var DP = window.DP_USER || window.DPUSER || {};
   var GDPR = window.DP_GDPR || {};
   var AJAX = DP.ajax_url || DP.ajaxurl || '';
@@ -12,6 +11,7 @@
   var overlay, modal;
   var tabLogin, tabReg;
   var formLogin, formReg, formForgot;
+  var modalBound = false;  // ← FONTOS: dupla bind védelem
 
   // ── CLOUDFLARE TURNSTILE ───────────────────────────────────────
   var tsWidgets = {};
@@ -88,8 +88,40 @@
     if (tab === 'register') tsInit('dp-turnstile-register');
   }
 
+  // ── GOOGLE GOMB HREF BEÁLLÍTÁS ─────────────────────────────────
+  function setupGoogleButton() {
+    var googleBtn = document.getElementById('dp-google-login-btn');
+    if (!googleBtn) return;
+
+    var googleUrl = DP.google_url || '';
+
+    if (googleUrl) {
+      // ✅ Beállítjuk a tényleges Google OAuth URL-t (a PHP-ból jön DP_USER.google_url)
+      googleBtn.setAttribute('href', googleUrl);
+
+      // Social redirect cookie mentése kattintáskor → callback visszairányít ide
+      googleBtn.addEventListener('click', function (e) {
+        // NEM hívunk e.preventDefault()-ot! A böngésző követi a href-et.
+        try {
+          document.cookie = 'dp_social_redirect=' + encodeURIComponent(window.location.href) + ';path=/;max-age=300;SameSite=Lax';
+        } catch (err) { /* silent */ }
+      });
+    } else {
+      // ❌ Nincs Google OAuth konfigurálva → rejtsük el a teljes social részt
+      var socialDiv  = document.getElementById('dp-auth-social');
+      var dividerDiv = document.getElementById('dp-auth-divider');
+      var footerNote = qs('.dp-auth-footer-note');
+      if (socialDiv)  socialDiv.style.display  = 'none';
+      if (dividerDiv) dividerDiv.style.display = 'none';
+      if (footerNote) footerNote.style.display = 'none';
+    }
+  }
+
   // ── MODAL FELDERÍTÉS / FELÉPÍTÉS ───────────────────────────────
   function ensureModal() {
+    // Ha már bindoltuk, ne csináljuk újra
+    if (modalBound) return;
+
     // 1) Ha a PHP már kirakta a modált (31-es snippet), AZT használjuk.
     overlay = document.getElementById('dp-auth-overlay');
     modal   = document.getElementById('dp-auth-modal');
@@ -104,6 +136,8 @@
   }
 
   function bindExistingModal() {
+    modalBound = true;  // ← Ne fusson le többször
+
     // Tabs
     tabLogin = qs('.dp-auth-tab[data-tab="login"]', modal) || qs('#dp-tab-login', modal);
     tabReg   = qs('.dp-auth-tab[data-tab="register"]', modal) || qs('#dp-tab-register', modal);
@@ -158,6 +192,9 @@
     if (formReg)    formReg.addEventListener('submit', handleRegisterExisting);
     if (formForgot) formForgot.addEventListener('submit', handleForgotExisting);
 
+    // ★ Google OAuth gomb href beállítás ★
+    setupGoogleButton();
+
     // Header/login gombok
     qsa('.dp-open-auth-modal, [data-open-auth]').forEach(function (el) {
       el.addEventListener('click', function (e) {
@@ -168,6 +205,8 @@
   }
 
   function buildModalFallback() {
+    modalBound = true;  // ← Ne fusson le többször
+
     // Minimal fallback, ha a PHP modált nem rendereli.
     var aszfUrl  = GDPR.aszf || '/aszf/';
     var adatkUrl = GDPR.adatkezeles || '/adatkezelesi-tajekoztato/';
@@ -201,12 +240,11 @@
           '<input type="email" id="dp-reg-email" name="email" placeholder="E-mail cím" required autocomplete="email">' +
           '<input type="password" id="dp-reg-pass" name="password" placeholder="Jelszó (min. 8 kar.)" required autocomplete="new-password">' +
           '<input type="text" name="dp_fax_number" id="dp-fax-reg" style="display:none" tabindex="-1" autocomplete="off">' +
-
-                    '<input type="hidden" name="gdpr_consent" value="1">' +
+          '<input type="hidden" name="gdpr_consent" value="1">' +
           '<p class="dp-auth-legal">A <strong>Regisztráció</strong> gomb megnyomásával elfogadod az ' +
           '<a href="' + adatkUrl + '" target="_blank" rel="noopener">Adatkezelési tájékoztatót</a> és az ' +
           '<a href="' + aszfUrl + '" target="_blank" rel="noopener">ÁSZF-et</a>.</p>' +
-'<button type="submit" class="dp-auth-btn">Regisztráció</button>' +
+          '<button type="submit" class="dp-auth-btn">Regisztráció</button>' +
           '<p class="dp-auth-msg" id="dp-reg-msg"></p>' +
         '</form>' +
       '</div>';
@@ -257,7 +295,12 @@
     setMsg(msg, '⏳ Bejelentkezés...', 'info');
     if (btn) btn.disabled = true;
 
-    dpAjax('dp_login', { email: email, password: pass, dp_fax_number: honey, 'cf-turnstile-response': tsToken('dp-turnstile-login') }, function (r) {
+    dpAjax('dp_login', {
+      email: email,
+      password: pass,
+      dp_fax_number: honey,
+      'cf-turnstile-response': tsToken('dp-turnstile-login')
+    }, function (r) {
       if (btn) btn.disabled = false;
       tsReset('dp-turnstile-login');
       if (r.success) {
@@ -269,7 +312,7 @@
     });
   }
 
-  // ── EXISTING MODAL: REGISTER ───────────────────────────────────
+  // ── EXISTING MODAL: REGISTER ──────────────────��────────────────
   function handleRegisterExisting(e) {
     e.preventDefault();
 
@@ -295,7 +338,6 @@
     setMsg(msg, '⏳ Regisztráció...', 'info');
     if (btn) btn.disabled = true;
 
-    // ITT volt a hiba: eddig NEM küldted a gdpr_consent mezőt
     dpAjax('dp_register', {
       name: name,
       email: email,
@@ -333,7 +375,11 @@
     setMsg(msg, '⏳ Küldés...', 'info');
     if (btn) btn.disabled = true;
 
-    dpAjax('dp_forgot_password', { email: email, dp_fax_number: honey, 'cf-turnstile-response': tsToken('dp-turnstile-forgot') }, function (r) {
+    dpAjax('dp_forgot_password', {
+      email: email,
+      dp_fax_number: honey,
+      'cf-turnstile-response': tsToken('dp-turnstile-forgot')
+    }, function (r) {
       if (btn) btn.disabled = false;
       tsReset('dp-turnstile-forgot');
       setMsg(msg, (r.success ? '✅ ' : '❌ ') + (r.data.message || 'Kérés elküldve.'), r.success ? 'success' : 'error');
@@ -410,17 +456,15 @@
   function setMsg(el, txt, type) {
     if (!el) return;
     el.textContent = txt;
-    // 31-es snippet: dp-auth-message--success/error osztályok
     if (el.classList && (el.id === 'dp-login-message' || el.id === 'dp-register-message' || el.id === 'dp-forgot-message')) {
       el.className = 'dp-auth-message ' + (type === 'success' ? 'dp-auth-message--success' : type === 'error' ? 'dp-auth-message--error' : '');
       if (type === 'info') el.className = 'dp-auth-message';
       return;
     }
-    // fallback: dp-auth-msg--...
     el.className = 'dp-auth-msg dp-auth-msg--' + (type || 'info');
   }
 
-  // ── KEDVENC GOMBOK (megtartva a régi logikát) ───────────────────
+  // ── KEDVENC GOMBOK ─────────────────────────────────────────────
   function initFavButtons() {
     qsa('[data-post-id]').forEach(function (btn) {
       btn.addEventListener('click', function () {
