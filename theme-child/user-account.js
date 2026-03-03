@@ -7,10 +7,32 @@
   var GDPR = window.DP_GDPR || {};
   var AJAX = DP.ajax_url || DP.ajaxurl || '';
   var NONCE = DP.nonce || '';
+  var SITEKEY = DP.turnstile_sitekey || '';
 
   var overlay, modal;
   var tabLogin, tabReg;
   var formLogin, formReg, formForgot;
+
+  // ── CLOUDFLARE TURNSTILE ───────────────────────────────────────
+  var tsWidgets = {};
+
+  function tsInit(id) {
+    if (!SITEKEY || typeof turnstile === 'undefined') return;
+    if (tsWidgets[id] !== undefined) return;
+    var el = document.getElementById(id);
+    if (el) tsWidgets[id] = turnstile.render(el, { sitekey: SITEKEY });
+  }
+
+  function tsReset(id) {
+    if (!SITEKEY || typeof turnstile === 'undefined') return;
+    var wid = tsWidgets[id];
+    if (wid !== undefined) turnstile.reset(wid);
+  }
+
+  function tsToken(id) {
+    if (!SITEKEY || typeof turnstile === 'undefined' || tsWidgets[id] === undefined) return '';
+    return turnstile.getResponse(tsWidgets[id]) || '';
+  }
 
   function qs(sel, root) { return (root || document).querySelector(sel); }
   function qsa(sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); }
@@ -61,6 +83,9 @@
     formReg.style.display   = tab === 'register' ? '' : 'none';
 
     if (formForgot) formForgot.style.display = 'none';
+
+    if (tab === 'login')    tsInit('dp-turnstile-login');
+    if (tab === 'register') tsInit('dp-turnstile-register');
   }
 
   // ── MODAL FELDERÍTÉS / FELÉPÍTÉS ───────────────────────────────
@@ -114,6 +139,7 @@
         formLogin.style.display = 'none';
         if (formReg) formReg.style.display = 'none';
         formForgot.style.display = '';
+        tsInit('dp-turnstile-forgot');
       });
     }
     if (forgotBack && formForgot && formLogin) {
@@ -231,8 +257,9 @@
     setMsg(msg, '⏳ Bejelentkezés...', 'info');
     if (btn) btn.disabled = true;
 
-    dpAjax('dp_login', { email: email, password: pass, dp_fax_number: honey }, function (r) {
+    dpAjax('dp_login', { email: email, password: pass, dp_fax_number: honey, 'cf-turnstile-response': tsToken('dp-turnstile-login') }, function (r) {
       if (btn) btn.disabled = false;
+      tsReset('dp-turnstile-login');
       if (r.success) {
         setMsg(msg, '✅ ' + (r.data.message || 'Sikeres bejelentkezés!'), 'success');
         setTimeout(function () { window.location.reload(); }, 700);
@@ -274,9 +301,11 @@
       email: email,
       password: pass,
       gdpr_consent: '1',
-      dp_fax_number: honey
+      dp_fax_number: honey,
+      'cf-turnstile-response': tsToken('dp-turnstile-register')
     }, function (r) {
       if (btn) btn.disabled = false;
+      tsReset('dp-turnstile-register');
       if (r.success) {
         setMsg(msg, '✅ ' + (r.data.message || 'Sikeres regisztráció! Ellenőrizd az e-mailt.'), 'success');
         formReg.reset();
@@ -304,8 +333,9 @@
     setMsg(msg, '⏳ Küldés...', 'info');
     if (btn) btn.disabled = true;
 
-    dpAjax('dp_forgot_password', { email: email, dp_fax_number: honey }, function (r) {
+    dpAjax('dp_forgot_password', { email: email, dp_fax_number: honey, 'cf-turnstile-response': tsToken('dp-turnstile-forgot') }, function (r) {
       if (btn) btn.disabled = false;
+      tsReset('dp-turnstile-forgot');
       setMsg(msg, (r.success ? '✅ ' : '❌ ') + (r.data.message || 'Kérés elküldve.'), r.success ? 'success' : 'error');
     });
   }
