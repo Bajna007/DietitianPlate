@@ -118,6 +118,7 @@ button.dg-macro-mode-btn{flex:1;padding:10px 14px;border:2px solid var(--dg-bord
 .dg-mc-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.dg-mc-name{display:flex;align-items:center;gap:6px;font-size:.82rem;font-weight:700}.dg-mc-dot{width:8px;height:8px;border-radius:50%;display:inline-block}.dg-mc--prot .dg-mc-dot{background:var(--dg-prot)}.dg-mc--fat .dg-mc-dot{background:var(--dg-fat)}.dg-mc--carb .dg-mc-dot{background:var(--dg-carb)}.dg-mc-pct{font-size:.72rem;font-weight:700;color:var(--dg-text-muted)}
 .dg-mc-body{display:flex;flex-direction:column;gap:8px}.dg-mc--prot .dg-slider{--sl-color:var(--dg-prot)}.dg-mc--fat .dg-slider{--sl-color:var(--dg-fat)}.dg-mc--carb .dg-slider{--sl-color:var(--dg-carb)}
 .dg-mc-vals{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}.dg-mc-gram{font-size:1.1rem;font-weight:800;font-variant-numeric:tabular-nums}.dg-mc-gram small{font-size:.72rem;font-weight:600;color:var(--dg-text-muted);margin-left:1px}.dg-mc-perkg{font-size:.72rem;font-weight:600;color:var(--dg-text-muted)}
+.dg-mc-custom-pkg{padding:4px 0}.dg-mc-custom-pkg .dg-input{font-size:14px;padding:6px 10px}
 .dg-macro-bar{display:flex;height:10px;border-radius:999px;overflow:hidden;margin-bottom:12px}.dg-bar-seg{height:100%;transition:width .3s ease}.dg-bar--prot{background:var(--dg-prot)}.dg-bar--fat{background:var(--dg-fat)}.dg-bar--carb{background:var(--dg-carb)}
 .dg-meals-top-center{display:flex;flex-direction:column;align-items:center;gap:10px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--dg-border)}.dg-stepper{display:flex;align-items:center;gap:12px}
 button.dg-step-btn{width:36px;height:36px;border:2px solid var(--dg-border)!important;border-radius:10px;background:var(--dg-card)!important;font-size:1.3rem;font-weight:800;color:var(--dg-text)!important;cursor:pointer;display:flex;align-items:center;justify-content:center;outline:none!important;box-shadow:none!important;font-family:inherit;transition:all var(--dg-transition);line-height:1}button.dg-step-btn:hover{border-color:var(--dg-accent)!important;color:var(--dg-accent)!important}
@@ -190,7 +191,8 @@ var TRG={broca:false,underweight:false,athlete:false};
 var FORMULAS={
 mifflin:{name:'Mifflin-St Jeor (1990)',calc:function(g,w,h,a){var b=(10*w)+(6.25*h)-(5*a);return g==='male'?b+5:b-161}},
 harris:{name:'Harris-Benedict (1919)',calc:function(g,w,h,a){return g==='male'?66.473+(13.7516*w)+(5.0033*h)-(6.755*a):655.0955+(9.5634*w)+(1.8496*h)-(4.6756*a)}},
-roza:{name:'Roza & Shizgal (1984)',calc:function(g,w,h,a){return g==='male'?88.362+(13.397*w)+(4.799*h)-(5.677*a):447.593+(9.247*w)+(3.098*h)-(4.330*a)}}
+roza:{name:'Roza & Shizgal (1984)',calc:function(g,w,h,a){return g==='male'?88.362+(13.397*w)+(4.799*h)-(5.677*a):447.593+(9.247*w)+(3.098*h)-(4.330*a)}},
+manual_input:{name:'Manuális bevitel',calc:null}
 };
 
 var mN={'1.2':{pK:0.8,fP:30,s:'EFSA DRV (2017); MDOSZ Okostányér (2021)'},'1.375':{pK:1.0,fP:30,s:'EFSA DRV (2017)'},'1.55':{pK:1.2,fP:28,s:'<a href="https://pubmed.ncbi.nlm.nih.gov/26920240/" target="_blank">Thomas et al. 2016</a>'},'1.725':{pK:1.4,fP:27,s:'<a href="https://pubmed.ncbi.nlm.nih.gov/26920240/" target="_blank">Thomas et al. 2016</a>'},'1.9':{pK:1.6,fP:25,s:'<a href="https://pubmed.ncbi.nlm.nih.gov/28698222/" target="_blank">Morton et al. 2018</a>'}};
@@ -240,7 +242,7 @@ function minKcal(){return GEN==='female'?1200:1500}
 function idealBroca(g,h){return g==='male'?(h-100)*0.9:(h-104)*0.85}
 function adjustedBW(g,h,w){var id=idealBroca(g,h);return r1(id+0.25*(w-id))}
 function updDerived(){BMI=bmiCalc(W,H);var isObese=BMI>=30&&!ATH;AB=isObese?adjustedBW(GEN,H,W):r1(W)}
-function recalcFromManual(){var f=FORMULAS[FORM];if(!f)f=FORMULAS.mifflin;updDerived();var cW=(BMI>=30&&!ATH)?adjustedBW(GEN,H,W):W;BMR_V=Math.round(f.calc(GEN,cW,H,AGE));if(BMR_V<0)BMR_V=0;T=Math.round(BMR_V*ACT)}
+function recalcFromManual(){var f=FORMULAS[FORM];if(!f)f=FORMULAS.mifflin;updDerived();var cW=(BMI>=30&&!ATH)?adjustedBW(GEN,H,W):W;var rawBmr=f.calc(GEN,cW,H,AGE);if(rawBmr<0)rawBmr=0;BMR_V=Math.round(rawBmr);T=Math.round(rawBmr*ACT)}
 function isUW(){return BMI>0&&BMI<18.5}
 
 function getRM(gt){
@@ -260,14 +262,27 @@ var lastRecNotice='';
 function buildRecNotice(rc,ek){
     var h='';
     if(rc.uw){
-        h+='<strong>\u26A0\uFE0F Energia- és fehérjebő étrend (BMI < 18,5 kg/m\u00B2)</strong><br><strong>1. Fehérje:</strong> '+rc.pP+' energia% (állandó)<br><strong>2. Zsír:</strong> '+rc.fP+' energia% (állandó)<br><strong>3. Szénhidrát:</strong> '+rc.cP+' energia% (maradék)<br>Ajánlott: 35\u201340 kcal/ttkg ('+Math.round(35*W)+'\u2013'+Math.round(40*W)+' kcal).<br><em>'+rc.src+'</em>'
+        h+='<strong>\u26A0\uFE0F Energia- és fehérjebő étrend (BMI < 18,5 kg/m\u00B2)</strong><br>';
+        h+='<strong>1. Fehérje:</strong> '+rc.pP+' energia%<br>';
+        h+='<strong>2. Zsír:</strong> '+rc.fP+' energia%<br>';
+        h+='<strong>3. Szénhidrát:</strong> '+rc.cP+' energia% (maradék: 100% \u2212 fehérje% \u2212 zsír%)<br>';
+        h+='Ajánlott: 35\u201340 kcal/ttkg ('+Math.round(35*W)+'\u2013'+Math.round(40*W)+' kcal).<br>';
+        h+='<em>'+rc.src+'</em>'
     }else if(rc.mode==='gPerKg'){
-        var pG=Math.round(rc.pK*rc.bwRef),pKc=pG*PROT_KCAL,fKc=ek*(rc.fP/100),cKc=Math.max(0,ek-pKc-fKc),tot=pKc+fKc+cKc,pp=tot>0?r1(pKc/tot*100):20,fp=r1(rc.fP),cp=r1(100-pp-fp);
-        h+='<strong>A makrók meghatározásának sorrendje:</strong><br><strong>1. Fehérje:</strong> '+rc.pK+' g/ttkg × '+rc.bwRef+' kg ('+rc.bwLabel+') = <strong>'+pG+' g</strong> ('+pp+' energia%) – állandó<br><strong>2. Zsír:</strong> '+fp+' energia% (állandó)<br><strong>3. Szénhidrát:</strong> '+cp+' energia% (maradék)<br>';
-        if(S.type==='cut')h+='<em>Fogyáskor a csökkentés a szénhidrátból történik.</em><br>';
+        var pG=Math.round(rc.pK*rc.bwRef),pKc=pG*PROT_KCAL,fKc=ek*(rc.fP/100),cKc=Math.max(0,ek-pKc-fKc),tot=pKc+fKc+cKc;
+        var pp=tot>0?r1(pKc/tot*100):20,fp=r1(rc.fP),cp=r1(100-pp-fp);
+        h+='<strong>A makrók meghatározásának sorrendje:</strong><br>';
+        h+='<strong>1. Fehérje (g/ttkg alapon):</strong> '+rc.pK+' g/ttkg \u00D7 '+rc.bwRef+' kg ('+rc.bwLabel+') = <strong>'+pG+' g</strong> ('+pp+' energia%) \u2014 <em>ez a kiindulás, a fehérje a testtömeg alapján kerül meghatározásra</em><br>';
+        h+='<strong>2. Zsír:</strong> '+fp+' energia% (a fennmaradó energiából rögzített arány)<br>';
+        h+='<strong>3. Szénhidrát:</strong> '+cp+' energia% (maradék: 100% \u2212 fehérje% \u2212 zsír%)<br>';
+        if(S.type==='cut')h+='<em>Fogyáskor a csökkentés a szénhidrátból történik, a fehérje és zsír aránya megmarad.</em><br>';
         h+='<em>'+rc.src+'</em>'
     }else{
-        h+='<strong>A makrók meghatározásának sorrendje:</strong><br><strong>1. Fehérje:</strong> '+rc.pP+' energia% (állandó)<br><strong>2. Zsír:</strong> '+rc.fP+' energia% (állandó)<br><strong>3. Szénhidrát:</strong> '+rc.cP+' energia% (maradék)<br><em>'+rc.src+'</em>'
+        h+='<strong>A makrók meghatározásának sorrendje:</strong><br>';
+        h+='<strong>1. Fehérje:</strong> '+rc.pP+' energia%<br>';
+        h+='<strong>2. Zsír:</strong> '+rc.fP+' energia%<br>';
+        h+='<strong>3. Szénhidrát:</strong> '+rc.cP+' energia% (maradék: 100% \u2212 fehérje% \u2212 zsír%)<br>';
+        h+='<em>'+rc.src+'</em>'
     }
     lastRecNotice=h;
     return h
@@ -292,8 +307,8 @@ function uSt(){
     e=$('cj-stat-age');if(e)e.textContent=AGE;
     e=$('cj-stat-gender');if(e)e.textContent=GEN==='male'?'Férfi':'Nő';
     e=$('cj-stat-kcalpkg');if(e)e.textContent=W>0?r1(T/W):'-';
-    e=$('cj-stat-formula');if(e){var fObj=FORMULAS[FORM];e.textContent=fObj?fObj.name:FORM}
-    e=$('cj-stat-activity');if(e)e.textContent=actLabels[String(ACT)]||('× '+ACT);
+    e=$('cj-stat-formula');if(e){if(FORM==='manual_input'){e.textContent='Manuális bevitel'}else{var fObj=FORMULAS[FORM];e.textContent=fObj?fObj.name:FORM}}
+    e=$('cj-stat-activity');if(e){if(FORM==='manual_input'){e.textContent='\u2014'}else{e.textContent=actLabels[String(ACT)]||('× '+ACT)}}
     e=$('cj-stat-athlete');if(e)e.textContent=ATH?'✅ Igen':'—';
     if(bwD)bwD.value=W;
     if(kEl)kEl.value=eK()
@@ -344,9 +359,26 @@ function onManual(){
     AGE=parseInt(mAge.value)||_AGE;
     GEN=mGen.value==='female'?'female':'male';
     FORM=mForm.value||'mifflin';
-    ACT=parseFloat(mAct.value)||1.55;
-    ATH=ACT>=2.0?1:0;
-    recalcFromManual();
+
+    var manKcalFields=$('cj-manual-kcal-fields');
+    var mKcalInp=$('cj-m-kcal');
+    var mKcalPkgInp=$('cj-m-kcalpkg');
+
+    if(FORM==='manual_input'){
+        if(mAct)mAct.disabled=true;
+        if(manKcalFields)manKcalFields.style.display='';
+        ACT=1;ATH=0;BMR_V=0;
+        var mk=parseFloat(mKcalInp?mKcalInp.value:0)||0;
+        T=mk>0?Math.round(mk):_T;
+        updDerived();
+    }else{
+        if(mAct)mAct.disabled=false;
+        if(manKcalFields)manKcalFields.style.display='none';
+        ACT=parseFloat(mAct.value)||1.55;
+        ATH=ACT>=2.0?1:0;
+        recalcFromManual();
+    }
+
     uSt();updTriggers();rAll()
 }
 
@@ -356,6 +388,29 @@ function onManual(){
         el.addEventListener('change',onManual)
     }
 });
+
+(function(){
+    var mKcalInp=$('cj-m-kcal'),mKcalPkgInp=$('cj-m-kcalpkg');
+    if(mKcalInp){
+        mKcalInp.addEventListener('input',function(){
+            if(FORM!=='manual_input')return;
+            var v=parseFloat(this.value)||0;
+            T=Math.round(v);
+            if(mKcalPkgInp&&W>0)mKcalPkgInp.value=(v/W).toFixed(1);
+            uSt();updTriggers();rAll()
+        });
+    }
+    if(mKcalPkgInp){
+        mKcalPkgInp.addEventListener('input',function(){
+            if(FORM!=='manual_input')return;
+            var v=parseFloat(this.value)||0;
+            var kcal=Math.round(v*W);
+            T=kcal;
+            if(mKcalInp)mKcalInp.value=kcal;
+            uSt();updTriggers();rAll()
+        });
+    }
+})();
 
 $$('.dg-type-card').forEach(function(c){
     c.addEventListener('click',function(){
@@ -563,7 +618,12 @@ function updMD(){
 
     var dis=S.mm==='recommended';
     pSl.disabled=dis;fSl.disabled=dis;cSl.disabled=dis;
-    pSl.style.opacity=dis?.5:1;fSl.style.opacity=dis?.5:1;cSl.style.opacity=dis?.5:1
+    pSl.style.opacity=dis?.5:1;fSl.style.opacity=dis?.5:1;cSl.style.opacity=dis?.5:1;
+
+    var ppkI=$('dg-p-pkg-input'),fpkI=$('dg-f-pkg-input'),cpkI=$('dg-c-pkg-input');
+    if(ppkI&&document.activeElement!==ppkI)ppkI.value=W>0?(pG/W).toFixed(2):'';
+    if(fpkI&&document.activeElement!==fpkI)fpkI.value=W>0?(fG/W).toFixed(2):'';
+    if(cpkI&&document.activeElement!==cpkI)cpkI.value=W>0?(cG/W).toFixed(2):''
 }
 
 $$('.dg-macro-mode-btn').forEach(function(b){
@@ -572,6 +632,8 @@ $$('.dg-macro-mode-btn').forEach(function(b){
         b.classList.add('is-active');
         S.mm=b.getAttribute('data-mode');
         if(S.mm==='recommended'){setRM();$('dg-macro-rec-notice').style.display=''}else $('dg-macro-rec-notice').style.display='none';
+        var pkgWraps=['dg-p-pkg-wrap','dg-f-pkg-wrap','dg-c-pkg-wrap'];
+        pkgWraps.forEach(function(id){var el=$(id);if(el)el.style.display=S.mm==='custom'?'':'none'});
         updMD();updMN()
     })
 });
@@ -586,6 +648,26 @@ $$('.dg-macro-mode-btn').forEach(function(b){
         updMD();updMN()
     })
 });
+
+(function(){
+    ['p','f','c'].forEach(function(m){
+        var inp=$('dg-'+m+'-pkg-input');
+        if(!inp)return;
+        inp.addEventListener('input',function(){
+            if(S.mm!=='custom')return;
+            var gpk=parseFloat(this.value)||0;
+            var grams=gpk*W;
+            var kcalFactor=m==='f'?FAT_KCAL:PROT_KCAL;
+            var kcalFromMacro=grams*kcalFactor;
+            var ek=eK();
+            var pct=ek>0?Math.round(kcalFromMacro/ek*100):0;
+            if(m==='p'){S.pP=pct;pSl.value=pct}
+            else if(m==='f'){S.fP=pct;fSl.value=pct}
+            else{S.cP=pct;cSl.value=pct}
+            updMD();updMN()
+        });
+    });
+})();
 
 /* ═══ ⑤ Étkezés ═══ */
 var mealN=['Reggeli','Tízórai','Ebéd','Uzsonna','Vacsora','Utóvacsora'];
@@ -797,7 +879,7 @@ function dpPdfConfirm(){
 function genPDF(){
     var ek=eK(),pG=(ek*S.pP/100)/PROT_KCAL,fG=(ek*S.fP/100)/FAT_KCAL,cG=(ek*S.cP/100)/CARB_KCAL;
     var tl={cut:'Fogyás',maintain:'Szintentartás',bulk:'Tömegnövelés'};
-    var fObj=FORMULAS[FORM],fName=fObj?fObj.name:FORM;
+    var fObj=FORMULAS[FORM],fName=(FORM==='manual_input')?'Manuális bevitel':(fObj?fObj.name:FORM);
 
     var css='<style>body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;padding:40px 50px;color:#1a1d1b;max-width:780px;margin:0 auto;font-size:13px;line-height:1.6}h1{font-size:20px;color:#2d6a4f;border-bottom:3px solid #2d6a4f;padding-bottom:10px;margin-bottom:6px}h2{font-size:14px;color:#2d6a4f;margin:24px 0 10px;border-bottom:1px solid #e2e6e4;padding-bottom:6px}.sub{font-size:11px;color:#666;margin:2px 0 20px}table{width:100%;border-collapse:collapse;margin:8px 0 16px}th{background:#f0f2f1;font-size:10px;text-transform:uppercase;letter-spacing:.05em;padding:6px 10px;text-align:left;border-bottom:2px solid #e2e6e4}td{padding:6px 10px;border-bottom:1px solid #e2e6e4}tr:nth-child(even){background:#fafafa}.grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:12px 0}.box{padding:12px;background:#f0f2f1;border-radius:8px;text-align:center}.box-val{font-size:18px;font-weight:800}.box-lab{font-size:9px;text-transform:uppercase;color:#666;margin-top:2px}.note{font-size:11px;color:#555;background:#f8f8f8;border-left:3px solid #2d6a4f;padding:8px 14px;margin:8px 0;border-radius:0 6px 6px 0}.warn{font-size:11px;color:#b45309;background:rgba(245,158,11,.06);border-left:3px solid #f59e0b;padding:8px 14px;margin:8px 0}.danger{font-size:11px;color:#dc2626;background:rgba(239,68,68,.05);border-left:3px solid #ef4444;padding:8px 14px;margin:8px 0}.footer{margin-top:30px;padding-top:12px;border-top:2px solid #e2e6e4;font-size:10px;color:#999}a{color:#2d6a4f}hr{border:none;border-top:1px solid #e2e6e4;margin:20px 0}.rec{font-size:11px;background:#f8faf9;border:1px solid #e2e6e4;border-radius:6px;padding:10px 14px;margin:8px 0;line-height:1.7}.sc{margin:12px 0;padding:10px 14px;background:#fafafa;border-radius:6px;border:1px solid #e2e6e4}.sc-t{font-weight:800;font-size:11px;color:#2d6a4f;margin-bottom:6px}.sc-i{font-size:10px;line-height:1.8;color:#555}.st{display:inline-block;padding:1px 6px;border-radius:4px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin-right:4px}.st-p{background:rgba(59,130,246,.1);color:#1d4ed8}.st-s{background:rgba(245,158,11,.1);color:#b45309}.st-m{background:rgba(34,197,94,.1);color:#16a34a}.st-g{background:rgba(139,92,246,.1);color:#6d28d9}.st-r{background:rgba(239,68,68,.1);color:#dc2626}.st-n{background:rgba(107,114,128,.1);color:#374151}.detail-box{background:#f0f7f4;border:1px solid #d4e7dd;border-radius:8px;padding:12px 16px;margin:8px 0;font-size:11px;line-height:1.8}.detail-row{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #e8ede9}.detail-row:last-child{border-bottom:none}.detail-label{color:#666}.detail-val{font-weight:700}.detail-val-accent{font-weight:800;color:#2d6a4f;font-size:13px}</style>';
 
@@ -846,9 +928,13 @@ function genPDF(){
 
     p+='<h2>\uD83E\uDDEE 2. Kalóriaszükséglet</h2><table><tbody>';
     p+='<tr><td><strong>Képlet</strong></td><td>'+fName+'</td></tr>';
-    p+='<tr><td><strong>Alapanyagcsere (BMR)</strong></td><td>'+BMR_V+' kcal/nap</td></tr>';
-    p+='<tr><td><strong>Aktivitási szorzó</strong></td><td>\u00D7 '+ACT+'</td></tr>';
-    p+='<tr><td><strong>Napi kalóriaszükséglet (TDEE)</strong></td><td><strong>'+T+' kcal/nap</strong></td></tr>';
+    if(FORM==='manual_input'){
+        p+='<tr><td><strong>Napi kalóriabevitel (manuálisan megadott)</strong></td><td><strong>'+T+' kcal/nap</strong></td></tr>';
+    }else{
+        p+='<tr><td><strong>Alapanyagcsere (BMR)</strong></td><td>'+BMR_V+' kcal/nap</td></tr>';
+        p+='<tr><td><strong>Aktivitási szorzó</strong></td><td>\u00D7 '+ACT+'</td></tr>';
+        p+='<tr><td><strong>Napi kalóriaszükséglet (TDEE)</strong></td><td><strong>'+T+' kcal/nap</strong></td></tr>';
+    }
     if(W>0)p+='<tr><td><strong>kcal/testtömeg-kg</strong></td><td>'+r1(T/W)+' kcal/ttkg</td></tr>';
     p+='</tbody></table>';
 
