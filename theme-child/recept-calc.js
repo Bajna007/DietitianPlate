@@ -1,3 +1,35 @@
+/* ═══════════════════════════════════════════════════
+   PDF MODAL – popup magyarázat a print előtt
+   ═══════════════════════════════════════════════ */
+function dpPdfConfirm() {
+    var ov = document.createElement('div');
+    ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:999999;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(3px)';
+    ov.innerHTML = '<div style="background:#fff;border-radius:16px;padding:28px 24px;max-width:360px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,0.3);font-family:-apple-system,BlinkMacSystemFont,sans-serif;text-align:center">'
+        + '<div style="font-size:36px;margin-bottom:10px">📄</div>'
+        + '<h3 style="margin:0 0 6px;font-size:17px;color:#1a1d1b">Mentés / Nyomtatás</h3>'
+        + '<p style="margin:0 0 14px;font-size:13px;color:#666;line-height:1.6">Megnyílik a böngésző nyomtatás ablaka.<br>A PDF mentéséhez kövesd az alábbi lépéseket:</p>'
+        + '<div style="background:#f0f7f4;border:1px solid #d4e7dd;border-radius:10px;padding:12px 14px;margin-bottom:18px;text-align:left">'
+        + '<div style="font-size:12px;font-weight:700;color:#2d6a4f;margin-bottom:8px">🖨️ Chrome / Edge (PC):</div>'
+        + '<div style="font-size:12px;color:#333;line-height:1.9;margin-bottom:10px">'
+        + '1. <strong>Cél:</strong> mezőnél válaszd:<br>'
+        + '&nbsp;&nbsp;&nbsp;→ <strong>"Mentés PDF-ként"</strong><br>'
+        + '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(ne: Microsoft Print to PDF)<br>'
+        + '2. Kattints a <strong>Mentés</strong> gombra'
+        + '</div>'
+        + '<div style="border-top:1px solid #d4e7dd;padding-top:8px;font-size:12px;color:#333;line-height:1.9">'
+        + '📱 <strong>Android Chrome:</strong><br>'
+        + '&nbsp;&nbsp;&nbsp;Nyomtató → <strong>PDF mentése</strong> → Letöltés<br>'
+        + '🍎 <strong>iPhone / iPad:</strong><br>'
+        + '&nbsp;&nbsp;&nbsp;Share gomb → <strong>Fájlokba mentés</strong>'
+        + '</div></div>'
+        + '<button id="dpok" style="width:100%;padding:13px;background:#2d6a4f;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:8px">Rendben, megnyitás →</button>'
+        + '<button id="dpcancel" style="width:100%;padding:8px;background:none;color:#aaa;border:none;font-size:13px;cursor:pointer">Mégsem</button>'
+        + '</div>';
+    document.body.appendChild(ov);
+    document.getElementById('dpcancel').onclick = function () { document.body.removeChild(ov); };
+    document.getElementById('dpok').onclick = function () { document.body.removeChild(ov); window.print(); };
+}
+
 (function () {
     'use strict';
 
@@ -16,13 +48,9 @@
     var state = { servings: INITIAL_SERVINGS, quantities: [] };
 
     var originalQuantities = [];
-    var baseQuantities = [];
-    var baseServings = INITIAL_SERVINGS;
-
     INGS.forEach(function (ing) {
         originalQuantities.push(ing.mennyiseg);
         state.quantities.push(ing.mennyiseg);
-        baseQuantities.push(ing.mennyiseg);
     });
 
     var dom = {};
@@ -54,20 +82,26 @@
     function r1(v) { return Math.round((v + Number.EPSILON) * 10) / 10; }
     function r2(v) { return Math.round((v + Number.EPSILON) * 100) / 100; }
 
-    function setText(sel, val) {
-        document.querySelectorAll(sel).forEach(function (el) {
-            el.textContent = val;
-        });
-    }
+function setText(sel, val) {
+    document.querySelectorAll(sel).forEach(function (el) {
+        // Ha van gyerek elem (pl. .makro-strip-unit span), csak a text node-ot cseréljük
+        var firstNode = el.firstChild;
+        if (firstNode && firstNode.nodeType === 3) {
+            firstNode.textContent = val;
+        } else {
+            // Ha nincs text node az elején, beszúrunk egyet
+            el.insertBefore(document.createTextNode(val), el.firstChild);
+        }
+    });
+}
 
-    // ???? Toast ?C display-alap??, nem opacity ????
+    // ══ Toast ══
     var toastTimer = null;
     function showToast(msg) {
         if (!dom.toast) { return; }
         clearTimeout(toastTimer);
         dom.toast.textContent = msg;
         dom.toast.style.display = 'block';
-        // k??nyszer??tett reflow hogy az anim??ci?? m?0?3k?0?2dj?0?2n
         void dom.toast.offsetHeight;
         dom.toast.classList.add('is-visible');
         toastTimer = setTimeout(function () {
@@ -78,7 +112,7 @@
         }, 2500);
     }
 
-    // ???? Makr??k ????
+    // ══ Makrók ══
     function calcMacros() {
         var t = { kcal: 0, feherje: 0, szenhidrat: 0, zsir: 0 };
         INGS.forEach(function (ing, idx) {
@@ -99,15 +133,11 @@
     }
 
     function calcPercentages(m) {
-        var fKcal = m.feherje * FACTORS.feherje;
-        var chKcal = m.szenhidrat * FACTORS.szenhidrat;
-        var zKcal = m.zsir * FACTORS.zsir;
-        var totalEnergy = fKcal + chKcal + zKcal;
-        if (totalEnergy <= 0) { return { feherje: 0, szenhidrat: 0, zsir: 0 }; }
+        if (m.kcal <= 0) { return { feherje: 0, szenhidrat: 0, zsir: 0 }; }
         return {
-            feherje:    Math.round((fKcal / totalEnergy) * 100),
-            szenhidrat: Math.round((chKcal / totalEnergy) * 100),
-            zsir:       Math.round((zKcal / totalEnergy) * 100)
+            feherje:    r2((m.feherje * FACTORS.feherje / m.kcal) * 100),
+            szenhidrat: r2((m.szenhidrat * FACTORS.szenhidrat / m.kcal) * 100),
+            zsir:       r2((m.zsir * FACTORS.zsir / m.kcal) * 100)
         };
     }
 
@@ -130,21 +160,27 @@
 
     function updateMacroDisplay(m) {
         var pct = calcPercentages(m);
+
+        // Értékek frissítése (nagy számok)
+        setText('.makro-val-kcal', m.kcal);
         setText('.makro-val-feherje', m.feherje);
         setText('.makro-val-szenhidrat', m.szenhidrat);
         setText('.makro-val-zsir', m.zsir);
-        setText('.makro-val-kcal', m.kcal);
-        setText('.makro-pct-feherje', pct.feherje);
-        setText('.makro-pct-szenhidrat', pct.szenhidrat);
-        setText('.makro-pct-zsir', pct.zsir);
+
+        // Energia% frissítése
+        // Az új HTML-ben: <span class="makro-strip-pct"><span class="makro-pct-feherje">85.7</span>% energia</span>
+        // A setText csak a belső span textContent-jét frissíti, a "% energia" szöveg a szülő text node-ban marad
+        setText('.makro-pct-feherje', pct.feherje.toFixed(1));
+        setText('.makro-pct-szenhidrat', pct.szenhidrat.toFixed(1));
+        setText('.makro-pct-zsir', pct.zsir.toFixed(1));
     }
 
     function updatePerAdag(m) {
         if (dom.perAdagDiv && state.servings > 1) {
             dom.perAdagDiv.innerHTML =
                 '1 adag: <strong>' + r1(m.kcal / state.servings) + '</strong> kcal \u00B7 ' +
-                '<strong>' + r1(m.feherje / state.servings) + '</strong>g feh. \u00B7 ' +
-                '<strong>' + r1(m.szenhidrat / state.servings) + '</strong>g sz.h. \u00B7 ' +
+                '<strong>' + r1(m.feherje / state.servings) + '</strong>g fehérje \u00B7 ' +
+                '<strong>' + r1(m.szenhidrat / state.servings) + '</strong>g szénhidrát \u00B7 ' +
                 '<strong>' + r1(m.zsir / state.servings) + '</strong>g zs\u00EDr';
             dom.perAdagDiv.style.display = 'block';
         } else if (dom.perAdagDiv) {
@@ -174,20 +210,10 @@
     }
 
     function applyServings() {
-        var ratio = state.servings / baseServings;
-        INGS.forEach(function (ing, idx) {
-            state.quantities[idx] = r1(baseQuantities[idx] * ratio);
-        });
-        updateUI();
-    }
-
-    function resetToOriginal() {
         var ratio = state.servings / INITIAL_SERVINGS;
         INGS.forEach(function (ing, idx) {
             state.quantities[idx] = r1(originalQuantities[idx] * ratio);
         });
-        baseQuantities = state.quantities.slice();
-        baseServings = state.servings;
         updateUI();
     }
 
@@ -204,58 +230,18 @@
         applyServings();
     }
 
-    function normalizeNumericInput(raw) {
-        var s = String(raw).replace(/,/g, '.');
-        s = s.replace(/[^0-9.]/g, '');
-        var parts = s.split('.');
-        if (parts.length > 2) { s = parts[0] + '.' + parts.slice(1).join(''); }
-        return s;
-    }
-
     function onIngredientInput(e) {
         var idx = parseInt(e.target.dataset.index, 10);
         if (isNaN(idx)) { return; }
-
-        var val = parseFloat(e.target.value);
-        if (isNaN(val)) { return; }
-        if (val <= 0) { val = 0.1; }
-        if (val > 99999) { val = 99999; }
-
-        state.quantities[idx] = val;
-        baseQuantities = state.quantities.slice();
-        baseServings = state.servings;
-
+        var raw = e.target.value.trim();
+        state.quantities[idx] = raw === '' ? 0 : (parseFloat(raw) || 0);
         var m = calcMacros();
         updateMacroDisplay(m);
         updatePerAdag(m);
         checkModified();
     }
 
-    function onIngredientBlur(e) {
-        var idx = parseInt(e.target.dataset.index, 10);
-        if (isNaN(idx)) { return; }
-
-        var normalized = normalizeNumericInput(e.target.value);
-        var val = parseFloat(normalized);
-
-        if (isNaN(val) || val <= 0) {
-            val = state.quantities[idx];
-            if (!val || val <= 0) { val = 0.1; }
-        }
-        if (val > 99999) { val = 99999; }
-
-        state.quantities[idx] = r1(val);
-        e.target.value = r1(val);
-        baseQuantities = state.quantities.slice();
-        baseServings = state.servings;
-
-        var m = calcMacros();
-        updateMacroDisplay(m);
-        updatePerAdag(m);
-        checkModified();
-    }
-
-    // ???? Bev??s??rl??lista ????
+    // ══ Bevásárlólista ══
     function buildShoppingLists() {
         var venni = [];
         var megvan = [];
@@ -348,8 +334,33 @@
         if (dom.sharePanel) { dom.sharePanel.classList.add('is-open'); }
     }
 
-    // ???? Progress bar ????
-    function updateProgress() {
+    // ══════════════════════════════════════════════════════
+    // PROGRESS BAR – JAVÍTOTT VÁLTOZAT
+    // ══════════════════════════════════════════════════════
+    var STORAGE_KEY = 'recept_lepesek_' + (window.location.pathname || '');
+
+    function loadSavedSteps() {
+        try {
+            var saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) { return JSON.parse(saved); }
+        } catch (e) {}
+        return {};
+    }
+
+    function saveSteps() {
+        var data = {};
+        dom.lepesCheckboxes.forEach(function (cb) {
+            var idx = cb.getAttribute('data-lepes');
+            if (idx !== null) {
+                data[idx] = cb.checked;
+            }
+        });
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        } catch (e) {}
+    }
+
+    function syncProgress() {
         if (!dom.lepesCheckboxes.length) { return; }
 
         var total = dom.lepesCheckboxes.length;
@@ -377,12 +388,32 @@
         }
     }
 
-    // ???? Init ????
+    function onStepToggle(e) {
+        e.stopPropagation();
+        syncProgress();
+        saveSteps();
+    }
+
+    function onStepLiClick(e) {
+        var li = e.currentTarget;
+        var cb = li.querySelector('.lepes-checkbox');
+        if (!cb) { return; }
+
+        if (e.target === cb || e.target.closest('.lepes-checkbox-label')) {
+            return;
+        }
+
+        cb.checked = !cb.checked;
+        syncProgress();
+        saveSteps();
+    }
+
+    // ══ Init ══
     function init() {
         cacheDom();
         if (!dom.adagInput) { return; }
 
-        // Toast alapb??l rejtett
+        // Toast alapból rejtett
         if (dom.toast) {
             dom.toast.style.display = 'none';
         }
@@ -396,21 +427,20 @@
         }
         dom.adagInput.addEventListener('input', onServingInput);
 
-        // ?0?0sszetev?0?2k
+        // Összetevők
         dom.ingInputs.forEach(function (inp) {
             inp.addEventListener('input', onIngredientInput);
-            inp.addEventListener('blur', onIngredientBlur);
         });
         if (dom.resetBtn) {
-            dom.resetBtn.addEventListener('click', function () { resetToOriginal(); });
+            dom.resetBtn.addEventListener('click', function () { applyServings(); });
         }
 
-        // Nyomtat??s
+        // Nyomtatás
         if (dom.printBtn) {
-            dom.printBtn.addEventListener('click', function () { window.print(); });
+            dom.printBtn.addEventListener('click', function () { dpPdfConfirm(); });
         }
 
-        // Bev??s??rl??lista v??g??lapra
+        // Bevásárlólista vágólapra
         if (dom.listBtn) {
             dom.listBtn.addEventListener('click', function () {
                 var text = buildListText();
@@ -422,7 +452,7 @@
             });
         }
 
-        // Megoszt??s
+        // Megosztás
         if (dom.shareBtn) {
             dom.shareBtn.addEventListener('click', doShare);
         }
@@ -451,13 +481,26 @@
             });
         }
 
-        // Progress bar
+        // ── Progress bar – javított event binding ──
+        var savedSteps = loadSavedSteps();
+
         dom.lepesCheckboxes.forEach(function (cb) {
-            cb.addEventListener('change', updateProgress);
+            var idx = cb.getAttribute('data-lepes');
+
+            if (idx !== null && savedSteps[idx]) {
+                cb.checked = true;
+            }
+
+            cb.addEventListener('change', onStepToggle);
+        });
+
+        var lepesItems = document.querySelectorAll('.recept-lepesek li');
+        lepesItems.forEach(function (li) {
+            li.addEventListener('click', onStepLiClick);
         });
 
         applyServings();
-        updateProgress();
+        syncProgress();
     }
 
     window.FitSite.ReceptCalc = {

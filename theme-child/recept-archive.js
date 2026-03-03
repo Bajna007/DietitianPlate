@@ -33,7 +33,6 @@
     var renderTimer = null;
     var totalAll = RECEPT_ADATOK.length;
 
-    // Restore localStorage
     var savedPP = localStorage.getItem('recept_per_page');
     if (savedPP && ['24','36','48'].indexOf(savedPP) !== -1) {
         state.perPage = parseInt(savedPP);
@@ -298,20 +297,18 @@
 
     function nehLabel(v) { return v ? v.charAt(0).toUpperCase() + v.slice(1) : ''; }
     function nehCss(v) {
-        var map = { 'könnyű':'konnyu','közepes':'kozepes','nehéz':'nehez' };
+        var map = { 'k\u00F6nny\u0171':'konnyu','k\u00F6zepes':'kozepes','neh\u00E9z':'nehez' };
         return map[v] || v;
     }
 
     // ══════════════════════════════════════════
-    // SZURES + RENDEZES
+    // SZURES
     // ══════════════════════════════════════════
 
     function getFiltered() {
         var q = state.search.toLowerCase();
-
         return RECEPT_ADATOK.filter(function(r) {
             if (q && r.cimLower.indexOf(q) === -1) return false;
-
             if (state.filters.kategoria !== 'all') {
                 if (r.kategoria.indexOf(state.filters.kategoria) === -1) return false;
             }
@@ -348,7 +345,6 @@
         var start = (state.page - 1) * state.perPage;
         var items = all.slice(start, start + state.perPage);
 
-        // Count
         var hasFilter = state.search ||
             state.filters.kategoria !== 'all' ||
             state.filters.jelleg !== 'all' ||
@@ -396,7 +392,6 @@
         var h = '';
         h += '<a href="' + r.url + '" class="recept-kartya" style="animation-delay:' + (idx * 0.04) + 's">';
 
-        // Kep
         h += '<div class="kartya-kep">';
         if (r.kep) {
             h += '<img src="' + r.kep + '" alt="' + esc(r.cim) + '" loading="lazy">';
@@ -407,7 +402,6 @@
             h += '<span class="kartya-nehezseg kartya-nehezseg--' + nehCss(r.nehezseg) + '">' + esc(nehLabel(r.nehezseg)) + '</span>';
         }
 
-        // Badges bal
         h += '<div class="kartya-badges-left">';
         if (r.vegan) {
             h += '<span class="kartya-vbadge kartya-vbadge--vegan" title="Veg\u00E1n"><span class="kartya-vbadge-icon">\uD83C\uDF31</span><span class="kartya-vbadge-text">V</span></span>';
@@ -423,18 +417,12 @@
         h += '</div>';
         h += '</div>';
 
-        // Body
         h += '<div class="kartya-body">';
         h += '<h2 class="kartya-cim">' + esc(r.cim) + '</h2>';
 
         h += '<div class="kartya-meta">';
         if (r.ido) h += '<span class="kartya-meta-item">\u23F1 ' + r.ido + ' perc</span>';
         if (r.adagok) h += '<span class="kartya-meta-item">\uD83C\uDF7D ' + r.adagok + ' adag</span>';
-        h += '</div>';
-
-        h += '<div class="kartya-makro">';
-        h += '<span class="kartya-makro-item"><strong>' + r.kcal + '</strong> kcal</span>';
-        h += '<span class="kartya-makro-item"><strong>' + r.feherje + 'g</strong> feh\u00E9rje</span>';
         h += '</div>';
 
         if (r.cimkek && r.cimkek.length) {
@@ -492,7 +480,7 @@
 
     // ══════════════════════════════════════════
     // RESPONSIVE
-    // ═════════════════════���════════════════════
+    // ══════════════════════════════════════════
 
     function handleResize() {
         if (window.innerWidth <= 900) {

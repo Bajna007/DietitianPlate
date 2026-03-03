@@ -4,8 +4,7 @@
  * 08 – Recept archív CSS
  */
 /**
- * 08 – Recept archív CSS – VÉGLEGES v11
- * Dropdown z-index fix + alaphelyzet gomb balra (Összes alá)
+ * 08 – Recept archív CSS – VÉGLEGES v12 FINAL
  */
 function recept_archive_inline_styles() {
     if ( ! is_post_type_archive( 'recept' ) && ! is_tax( 'recept_kategoria' ) && ! is_tax( 'recept_jelleg' ) && ! is_tax( 'recept_dieta' ) ) {
@@ -313,8 +312,6 @@ function recept_archive_inline_styles() {
 .kartya-body { padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 8px; flex: 1; }
 .kartya-cim { font-size: 1.05rem; font-weight: 700; margin: 0; line-height: 1.3; }
 .kartya-meta { display: flex; gap: 12px; font-size: 0.82rem; color: var(--r-text-muted); }
-.kartya-makro { display: flex; gap: 12px; font-size: 0.8rem; color: var(--r-text-muted); }
-.kartya-makro strong { color: var(--r-accent-dark); font-weight: 700; }
 .kartya-cimkek { display: flex; flex-wrap: wrap; gap: 4px; margin-top: auto; }
 .kartya-cimke { font-size: 0.68rem; padding: 2px 10px; border-radius: 999px; background: var(--r-accent-soft); color: var(--r-accent-dark); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
 .kartya-cimke--vegan { background: var(--r-accent-dark); color: #fff; }
@@ -376,7 +373,6 @@ function recept_archive_inline_styles() {
     .kartya-body { padding: 10px 12px 14px; gap: 5px; }
     .kartya-cim { font-size: 0.85rem; line-height: 1.25; }
     .kartya-meta { font-size: 0.72rem; gap: 8px; }
-    .kartya-makro { font-size: 0.7rem; gap: 8px; }
     .kartya-cimkek { gap: 3px; }
     .kartya-cimke { font-size: 0.58rem; padding: 1px 7px; }
     .kartya-nehezseg { top: 8px; right: 8px; padding: 3px 8px; font-size: 0.6rem; }

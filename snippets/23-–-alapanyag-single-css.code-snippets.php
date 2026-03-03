@@ -3,10 +3,13 @@
 /**
  * 23 – Alapanyag Single CSS
  */
+/**
+ * 23 – Alapanyag Single CSS
+ */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 // ============================================================
-// 23 – Alapanyag Single CSS (v9 – dinamikus fejléc zöld szín)
+// 23 – Alapanyag Single CSS (v10 – SVG ikonok, rost/cukor/tzsír sor törölve, elválasztók balra)
 // ============================================================
 
 function alapanyag_single_css() {
@@ -15,8 +18,7 @@ function alapanyag_single_css() {
     $css = <<<'CSSEOF'
 
 /* ══════════════════════════════════════════════════════════════
-   ALAPANYAG SINGLE – PRÉMIUM DESIGN v9
-   dinamikus fejléc zöld szín + minden korábbi funkció
+   ALAPANYAG SINGLE – PRÉMIUM DESIGN v10
    ══════════════════════════════════════════════════════════════ */
 
 :root {
@@ -233,7 +235,17 @@ function alapanyag_single_css() {
 }
 
 .aa-section-icon {
-    font-size: 1.1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.aa-section-icon .aa-ico {
+    width: 18px;
+    height: 18px;
+    stroke: #fff;
+    opacity: 0.85;
 }
 
 .aa-section-sub {
@@ -241,6 +253,27 @@ function alapanyag_single_css() {
     font-size: 0.82rem;
     opacity: 0.7;
     margin-left: auto;
+}
+
+
+/* ══════════════════════════════════════════
+   SVG IKONOK (táblázatban)
+   ══════════════════════════════════════════ */
+
+.aa-ico {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 6px;
+    flex-shrink: 0;
+    stroke: var(--aa-text-muted);
+    opacity: 0.55;
+}
+
+.aa-table td .aa-ico {
+    width: 14px;
+    height: 14px;
+    position: relative;
+    top: -1px;
 }
 
 
@@ -326,7 +359,7 @@ function alapanyag_single_css() {
 /* ── ENERGIA% MAGYARÁZÓ SÁV ── */
 
 .aa-macro-notice {
-    margin: 0 24px 16px;
+    margin: 0 24px 20px;
     padding: 10px 14px;
     background: #f8f9fa;
     border: 1px solid #e9ecef;
@@ -335,33 +368,6 @@ function alapanyag_single_css() {
     font-size: 0.75rem;
     line-height: 1.5;
     color: var(--aa-text-muted);
-}
-
-
-/* ── MAKRÓ EXTRA ── */
-
-.aa-macro-extra {
-    display: flex;
-    justify-content: center;
-    gap: 24px;
-    padding: 0 24px 20px;
-    font-size: 0.86rem;
-    color: var(--aa-text-muted);
-}
-
-
-/* ══════════════════════════════════════════
-   ZSÍR EMOJI FIX
-   ══════════════════════════════════════════ */
-
-.aa-emoji-zsir {
-    font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", "Twemoji Mozilla", sans-serif;
-    font-style: normal;
-    font-weight: normal;
-    font-size: 1em;
-    line-height: 1;
-    vertical-align: middle;
-    display: inline-block;
 }
 
 
@@ -461,7 +467,7 @@ function alapanyag_single_css() {
     table-layout: fixed;
 }
 
-/* ── FEJLÉC – DINAMIKUS ZÖLD CÍMKE ── */
+/* ── FEJLÉC ── */
 
 .aa-table thead th {
     padding: 12px 0;
@@ -523,7 +529,7 @@ function alapanyag_single_css() {
     padding-left: 24px;
 }
 
-/* ─── KATEGÓRIA ELVÁLASZTÓ SOROK ─── */
+/* ─── KATEGÓRIA ELVÁLASZTÓ SOROK – BALRA IGAZÍTOTT ─── */
 
 .aa-row-divider td {
     padding: 0;
@@ -531,7 +537,7 @@ function alapanyag_single_css() {
 }
 
 .aa-row-divider td[colspan] {
-    padding: 24px 0 8px 0;
+    padding: 24px 0 8px 4px;
     background: transparent;
     border-bottom: none;
     font-size: 0.76rem;
@@ -539,6 +545,7 @@ function alapanyag_single_css() {
     color: var(--aa-accent);
     text-transform: uppercase;
     letter-spacing: 0.08em;
+    text-align: left;
     position: relative;
 }
 
@@ -661,7 +668,7 @@ function alapanyag_single_css() {
 
 /* ══════════════════════════════════════════
    RESPONSIVE
-   ══════════════════════════════��═══════════ */
+   ══════════════════════════════════════════ */
 
 @media (max-width: 768px) {
     .aa-hero {
@@ -691,14 +698,8 @@ function alapanyag_single_css() {
         font-size: 1.4rem;
     }
 
-    .aa-macro-extra {
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-    }
-
     .aa-macro-notice {
-        margin: 0 16px 12px;
+        margin: 0 16px 16px;
     }
 
     .aa-tabs {
@@ -764,7 +765,7 @@ function alapanyag_single_css() {
     }
 
     .aa-macro-notice {
-        margin: 0 12px 10px;
+        margin: 0 12px 12px;
         font-size: 0.7rem;
     }
 }

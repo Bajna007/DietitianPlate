@@ -3,6 +3,10 @@
 /**
  * 15 – Tápanyag archív JS
  */
+/**
+ * 15 – Tápanyag archív JS betöltő – v2.1 FIX
+ * Összefoglaló truncálva 150 karakterre a JSON méret csökkentése érdekében
+ */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
 add_action( 'wp_enqueue_scripts', function() {
@@ -29,13 +33,19 @@ add_action( 'wp_enqueue_scripts', function() {
         $hatas   = wp_get_post_terms( $post->ID, 'tapanyag_hatas',   ['fields' => 'names'] );
         $esszenc = wp_get_post_terms( $post->ID, 'esszencialis',     ['fields' => 'names'] );
 
+        // Összefoglaló truncálás – max 150 karakter a kártyához
+        $raw_osszefoglalo = get_field( 'osszefoglalo', $post->ID ) ?: '';
+        $osszefoglalo = mb_strlen( $raw_osszefoglalo ) > 150
+            ? mb_substr( $raw_osszefoglalo, 0, 147 ) . '���'
+            : $raw_osszefoglalo;
+
         $adatok[] = [
             'id'           => $post->ID,
             'cim'          => get_the_title( $post->ID ),
             'url'          => get_permalink( $post->ID ),
             'kep'          => $thumb ?: '',
             'kemiai_nev'   => get_field( 'kemiai_nev', $post->ID ) ?: '',
-            'osszefoglalo' => get_field( 'osszefoglalo', $post->ID ) ?: '',
+            'osszefoglalo' => $osszefoglalo,
             'tipus'        => $tipus ?: [],
             'oldhatosag'   => $oldhat ?: [],
             'csoport'      => $csoport ?: [],
@@ -48,7 +58,7 @@ add_action( 'wp_enqueue_scripts', function() {
         'tapanyag-archive-js',
         get_stylesheet_directory_uri() . '/tapanyag-archive.js',
         [],
-        '1.0',
+        '2.1',
         true
     );
 

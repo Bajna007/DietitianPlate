@@ -1,12 +1,53 @@
 <?php
 /**
  * Archive Recept template – v7 kliens-oldali szűrés/lapozás
+ * + makró chip adatok PHP-ban előkészítve JS-nek
  */
 get_header();
 
 $kategoriak = get_terms([ 'taxonomy' => 'recept_kategoria', 'hide_empty' => false ]);
 $jellegek   = get_terms([ 'taxonomy' => 'recept_jelleg',    'hide_empty' => false ]);
 $dietak     = get_terms([ 'taxonomy' => 'recept_dieta',     'hide_empty' => false ]);
+
+// Makró adatok előkészítése minden recepthez (JS data)
+$all_receptek = get_posts([
+    'post_type'      => 'recept',
+    'posts_per_page' => -1,
+    'post_status'    => 'publish',
+    'no_found_rows'  => true,
+    'fields'         => 'ids',
+]);
+
+$makro_cache = [];
+foreach ( $all_receptek as $rid ) {
+    $kcal = 0; $feh = 0; $szh = 0; $zsir = 0;
+    $adagok = max(1, (int) get_field('adagokszama', $rid));
+    $map = ['g'=>1,'ml'=>1,'ek'=>15,'tk'=>5,'db'=>50,'csipet'=>1];
+    if ( have_rows('osszetevok', $rid) ) {
+        while ( have_rows('osszetevok', $rid) ) {
+            the_row();
+            $m  = (float) get_sub_field('mennyiseg');
+            $me = get_sub_field('mertekegyseg');
+            $a  = get_sub_field('kapcsolodo_alapanyag');
+            if ( is_object($a) ) {
+                $g = isset($map[$me]) ? $m * $map[$me] : $m;
+                $p = get_field('kaloria', $a->ID);
+                if ($p) {
+                    $kcal += (float)($p['kcal']        ?? 0) / 100 * $g;
+                    $feh  += (float)($p['feherje']     ?? 0) / 100 * $g;
+                    $szh  += (float)($p['szenhidrat']  ?? 0) / 100 * $g;
+                    $zsir += (float)($p['zsir']        ?? 0) / 100 * $g;
+                }
+            }
+        }
+    }
+    $makro_cache[$rid] = [
+        'kcal' => round($kcal / $adagok),
+        'feh'  => round($feh  / $adagok, 1),
+        'szh'  => round($szh  / $adagok, 1),
+        'zsir' => round($zsir / $adagok, 1),
+    ];
+}
 ?>
 
 <main id="primary" class="site-main recept-archiv">
@@ -140,5 +181,10 @@ $dietak     = get_terms([ 'taxonomy' => 'recept_dieta',     'hide_empty' => fals
     <div id="recept-pagination" class="recept-pagination"></div>
 
 </main>
+
+<?php
+// Makró cache átadása JS-nek
+wp_localize_script( 'recept-archive', 'receptMakroData', $makro_cache );
+?>
 
 <?php get_footer(); ?>

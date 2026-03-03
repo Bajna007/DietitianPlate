@@ -3,6 +3,9 @@
 /**
  * 01 – Recept CPT + kategória
  */
+/**
+ * 01 – Recept CPT + kategória
+ */
 // Recept CPT + kategória taxonómia
 function recept_cpt_init() {
     register_post_type('recept', [

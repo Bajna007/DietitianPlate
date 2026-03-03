@@ -4,6 +4,9 @@
  * 04 – Recept makró kalkulátor
  */
 /**
+ * 04 – Recept makró kalkulátor
+ */
+/**
  * 04 – Recept makró kalkulátor v3 (PHP)
  * Per-összetevő mennyiség szerkesztés → makrók automatikus számítás
  */
@@ -42,11 +45,12 @@ function recept_calc_enqueue_scripts() {
         while ( have_rows( 'osszetevok', $post->ID ) ) {
             the_row();
 
-            $mennyiseg    = floatval( get_sub_field( 'mennyiseg' ) );
-            $mertekegyseg = get_sub_field( 'mertekegyseg' );
+            $mennyiseg            = floatval( get_sub_field( 'mennyiseg' ) );
+            $mertekegyseg         = get_sub_field( 'mertekegyseg' );
             if ( ! $mertekegyseg ) { $mertekegyseg = 'g'; }
-            $alapanyag  = get_sub_field( 'alapanyag' );
-            $megjegyzes = get_sub_field( 'megjegyzes' );
+            $alapanyag            = get_sub_field( 'alapanyag' );
+            $kapcsolodo_alapanyag = get_sub_field( 'kapcsolodo_alapanyag' );
+            $megjegyzes           = get_sub_field( 'megjegyzes' );
 
             $aa_kcal       = 0;
             $aa_feherje    = 0;
@@ -55,14 +59,15 @@ function recept_calc_enqueue_scripts() {
             $alapanyag_nev = '';
             $has_macro     = false;
 
-            if ( $alapanyag && is_object( $alapanyag ) ) {
-                $alapanyag_nev  = $alapanyag->post_title;
-                $aa_kcal        = floatval( get_field( 'kaloria',    $alapanyag->ID ) );
-                $aa_feherje     = floatval( get_field( 'feherje',    $alapanyag->ID ) );
-                $aa_szenhidrat  = floatval( get_field( 'szenhidrat', $alapanyag->ID ) );
-                $aa_zsir        = floatval( get_field( 'zsir',       $alapanyag->ID ) );
+            if ( $kapcsolodo_alapanyag && is_object( $kapcsolodo_alapanyag ) ) {
+                $aa_kcal        = floatval( get_field( 'kaloria',    $kapcsolodo_alapanyag->ID ) );
+                $aa_feherje     = floatval( get_field( 'feherje',    $kapcsolodo_alapanyag->ID ) );
+                $aa_szenhidrat  = floatval( get_field( 'szenhidrat', $kapcsolodo_alapanyag->ID ) );
+                $aa_zsir        = floatval( get_field( 'zsir',       $kapcsolodo_alapanyag->ID ) );
                 $has_macro      = ( $aa_kcal + $aa_feherje + $aa_szenhidrat + $aa_zsir ) > 0;
             }
+
+            $alapanyag_nev = is_string( $alapanyag ) ? $alapanyag : '';
 
             if ( ! $has_macro && ! empty( $alapanyag_nev ) ) {
                 $missing[] = $alapanyag_nev;

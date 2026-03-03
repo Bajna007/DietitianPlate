@@ -1,504 +1,371 @@
-(function() {
+/**
+ * Tápanyag archív JS – v2 REWORK
+ * Kliens-oldali szűrés, kártyarenderer, pagination, localStorage
+ * Recept archív JS mintájára
+ */
+(function () {
     'use strict';
 
-    var grid           = document.getElementById('ta-grid');
-    var pagination     = document.getElementById('ta-pagination');
-    var resultInfo     = document.getElementById('ta-result-info');
-    var searchInput    = document.getElementById('ta-search');
-    var searchClear    = document.getElementById('ta-search-clear');
-    var searchDropdown = document.getElementById('ta-search-dropdown');
-    var sortSelect     = document.getElementById('ta-sort');
-    var totalCountEl   = document.getElementById('ta-total-count');
-    var filterToggle   = document.getElementById('ta-filter-toggle');
-    var szuroPanel     = document.getElementById('ta-szuro-panel');
-    var szuroPanelInner= document.getElementById('ta-szuro-panel-inner');
-    var szuroReset     = document.getElementById('ta-szuro-reset');
+    /* ═══ ADATOK ═══ */
+    const DATA = window.TAPANYAG_ADATOK || [];
+    if (!DATA.length) return;
 
-    if (!grid || typeof TAPANYAG_ADATOK === 'undefined') return;
+    /* ═══ DOM ELEMEK ═══ */
+    const grid         = document.getElementById('ta-grid');
+    const pagination   = document.getElementById('ta-pagination');
+    const searchInput  = document.getElementById('ta-search');
+    const searchClear  = document.getElementById('ta-search-clear');
+    const dropdown     = document.getElementById('ta-dropdown');
+    const filterToggle = document.getElementById('ta-filter-toggle');
+    const filterPanel  = document.getElementById('ta-szuro-panel');
+    const filterInner  = document.getElementById('ta-szuro-panel-inner');
+    const filterReset  = document.getElementById('ta-szuro-reset');
+    const resultCount  = document.getElementById('ta-result-count');
 
-    var state = {
-        page: 1,
-        search: '',
-        sort: 'title_asc',
-        perPage: 24,
-        cols: 4,
-        filters: {
-            tapanyag_tipus: null,
-            oldhatosag: null,
-            tapanyag_csoport: null,
-            tapanyag_hatas: null,
-            esszencialis: null
+    if (!grid) return;
+
+    /* ═══ ÁLLAPOT ═══ */
+    let state = {
+        search:   '',
+        filters:  { tipus: 'all', oldhatosag: 'all', esszencialis: 'all' },
+        page:     1,
+        perPage:  parseInt(localStorage.getItem('ta_perpage')) || 24,
+        cols:     parseInt(localStorage.getItem('ta_cols')) || 4,
+        filtered: []
+    };
+
+    /* ═══ SEGÉDFÜGGVÉNYEK ═══ */
+    const esc = (s) => {
+        const d = document.createElement('div');
+        d.textContent = s;
+        return d.innerHTML;
+    };
+
+    const slugify = (s) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+
+    const getTypusBadgeClass = (tipus) => {
+        if (!tipus || !tipus.length) return 'egyeb';
+        const t = tipus[0].toLowerCase();
+        if (t.includes('vitamin')) return 'vitamin';
+        if (t.includes('ásványi') || t.includes('asvany')) return 'asvany';
+        if (t.includes('nyomelem')) return 'nyomelem';
+        if (t.includes('aminosav')) return 'aminosav';
+        if (t.includes('szénhidrát') || t.includes('szenhidrat')) return 'szenhidrat';
+        if (t.includes('zsírsav') || t.includes('zsirsav')) return 'zsirsav';
+        return 'egyeb';
+    };
+
+    /* ═══ SZŰRÉS ═══ */
+    function applyFilters() {
+        let items = [...DATA];
+
+        // Keresés
+        if (state.search) {
+            const q = state.search.toLowerCase();
+            items = items.filter(i =>
+                i.cim.toLowerCase().includes(q) ||
+                (i.kemiai_nev && i.kemiai_nev.toLowerCase().includes(q))
+            );
         }
-    };
 
-    var panelOpen = false;
-    var searchTimer = null;
-    var renderTimer = null;
+        // Típus
+        if (state.filters.tipus !== 'all') {
+            items = items.filter(i =>
+                i.tipus.some(t => slugify(t) === state.filters.tipus)
+            );
+        }
 
-    var tipusClass = {
-        'Vitamin': 'vitamin',
-        'Zsírsav': 'zsirsav',
-        'Szénhidrát': 'szenhidrat',
-        'Aminosav': 'aminosav',
-        'Ásványi anyag': 'asvany'
-    };
+        // Oldhatóság
+        if (state.filters.oldhatosag !== 'all') {
+            items = items.filter(i =>
+                i.oldhatosag.some(o => slugify(o) === state.filters.oldhatosag)
+            );
+        }
 
-    var oldhatosagClass = {
-        'Vízben oldódó': 'vizben',
-        'Zsírban oldódó': 'zsirban'
-    };
+        // Esszencialitás
+        if (state.filters.esszencialis !== 'all') {
+            items = items.filter(i =>
+                i.esszencialis.some(e => slugify(e) === state.filters.esszencialis)
+            );
+        }
 
-    var savedPP = localStorage.getItem('ta_per_page');
-    if (savedPP && ['24','36','48'].indexOf(savedPP) !== -1) {
-        state.perPage = parseInt(savedPP);
+        state.filtered = items;
+        state.page = 1;
+        render();
     }
-    var savedCols = localStorage.getItem('ta_grid_cols');
-    if (savedCols && ['3','4','5'].indexOf(savedCols) !== -1) {
-        state.cols = parseInt(savedCols);
-    }
 
-    applyGridCols();
-    syncPPButtons();
-    syncColButtons();
+    /* ═══ KÁRTYA RENDERELÉS ═══ */
+    function renderCard(item) {
+        const typusClass = getTypusBadgeClass(item.tipus);
+        const typusLabel = item.tipus.length ? esc(item.tipus[0]) : '';
+        const oldhatLabel = item.oldhatosag.length ? esc(item.oldhatosag[0]) : '';
 
-
-    // ══════════════════════════════════════════════════════
-    // SZŰRŐ PANEL TOGGLE
-    // ══════════════════════════════════════════════════════
-
-    filterToggle.addEventListener('click', function() {
-        panelOpen = !panelOpen;
-        if (panelOpen) {
-            szuroPanel.style.maxHeight = szuroPanelInner.scrollHeight + 'px';
-            szuroPanel.classList.add('is-open');
-            filterToggle.classList.add('is-active');
+        let kepHtml;
+        if (item.kep) {
+            kepHtml = `<div class="ta-kartya-kep"><img src="${esc(item.kep)}" alt="${esc(item.cim)}" loading="lazy">${typusLabel ? `<span class="ta-kartya-tipus-badge ta-kartya-tipus-badge--${typusClass}">${typusLabel}</span>` : ''}${oldhatLabel ? `<span class="ta-kartya-oldhatosag-badge">${oldhatLabel}</span>` : ''}</div>`;
         } else {
-            szuroPanel.style.maxHeight = '0px';
-            szuroPanel.classList.remove('is-open');
-            filterToggle.classList.remove('is-active');
+            kepHtml = `<div class="ta-kartya-kep"><div class="ta-kartya-kep-placeholder">💊</div>${typusLabel ? `<span class="ta-kartya-tipus-badge ta-kartya-tipus-badge--${typusClass}">${typusLabel}</span>` : ''}${oldhatLabel ? `<span class="ta-kartya-oldhatosag-badge">${oldhatLabel}</span>` : ''}</div>`;
         }
-    });
 
-
-    // ══════════════════════════════════════════════════════
-    // CHIP SZŰRŐK
-    // ══════════════════════════════════════════════════════
-
-    document.querySelectorAll('.ta-chip').forEach(function(chip) {
-        chip.addEventListener('click', function() {
-            var tax = this.dataset.tax;
-            var val = this.dataset.value;
-
-            if (state.filters[tax] === val) {
-                state.filters[tax] = null;
-                this.classList.remove('is-active');
+        let chipsHtml = '';
+        if (item.hatas && item.hatas.length) {
+            const maxChips = 3;
+            const chips = item.hatas.slice(0, maxChips).map(h =>
+                `<span class="ta-kartya-chip ta-kartya-chip--hatas">${esc(h)}</span>`
+            ).join('');
+            chipsHtml = `<div class="ta-kartya-chips">${chips}</div>`;
+        }
+        if (item.esszencialis && item.esszencialis.length) {
+            const eChips = item.esszencialis.map(e =>
+                `<span class="ta-kartya-chip ta-kartya-chip--esszencialis">${esc(e)}</span>`
+            ).join('');
+            if (chipsHtml) {
+                chipsHtml = chipsHtml.replace('</div>', eChips + '</div>');
             } else {
-                document.querySelectorAll('.ta-chip[data-tax="' + tax + '"]').forEach(function(c) {
-                    c.classList.remove('is-active');
-                });
-                state.filters[tax] = val;
-                this.classList.add('is-active');
+                chipsHtml = `<div class="ta-kartya-chips">${eChips}</div>`;
             }
-
-            state.page = 1;
-            updateFilterBadge();
-            renderResults();
-        });
-    });
-
-
-    // ══���═══════════════════════════════════════════════════
-    // SZŰRŐ BADGE
-    // ══════════════════════════════════════════════════════
-
-    function updateFilterBadge() {
-        var count = 0;
-        var keys = Object.keys(state.filters);
-        for (var i = 0; i < keys.length; i++) {
-            if (state.filters[keys[i]]) count++;
         }
 
-        var existing = filterToggle.querySelector('.ta-filter-badge');
-        if (existing) existing.remove();
+        const osszefoglalo = item.osszefoglalo
+            ? `<div class="ta-kartya-osszefoglalo">${esc(item.osszefoglalo)}</div>`
+            : '';
 
-        if (count > 0) {
-            var badge = document.createElement('span');
-            badge.className = 'ta-filter-badge';
-            badge.textContent = count;
-            filterToggle.appendChild(badge);
-        }
+        const kemiai = item.kemiai_nev
+            ? `<div class="ta-kartya-kemiai">${esc(item.kemiai_nev)}</div>`
+            : '';
+
+        return `<a href="${esc(item.url)}" class="ta-kartya">${kepHtml}<div class="ta-kartya-body"><h3 class="ta-kartya-cim">${esc(item.cim)}</h3>${kemiai}${osszefoglalo}${chipsHtml}</div></a>`;
     }
 
+    /* ═══ RENDER ═══ */
+    function render() {
+        const items   = state.filtered;
+        const total   = items.length;
+        const start   = (state.page - 1) * state.perPage;
+        const end     = Math.min(start + state.perPage, total);
+        const pageItems = items.slice(start, end);
 
-    // ══════════════════════════════════════════════════════
-    // ALAPHELYZET
-    // ══════════════════════════════════════════════════════
-
-    szuroReset.addEventListener('click', function() {
-        var keys = Object.keys(state.filters);
-        for (var i = 0; i < keys.length; i++) {
-            state.filters[keys[i]] = null;
-        }
-        document.querySelectorAll('.ta-chip').forEach(function(c) {
-            c.classList.remove('is-active');
-        });
-        if (searchInput) {
-            searchInput.value = '';
-            state.search = '';
-            searchClear.style.display = 'none';
-        }
-        closeDropdown();
-        state.page = 1;
-        updateFilterBadge();
-        renderResults();
-    });
-
-
-    // ══════════════════════════════════════════════════════
-    // OSZLOP VÁLASZTÓ
-    // ══════════════════════════════════════════════════════
-
-    document.querySelectorAll('.ta-col-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            state.cols = parseInt(this.dataset.cols);
-            localStorage.setItem('ta_grid_cols', String(state.cols));
-            syncColButtons();
-            applyGridCols();
-        });
-    });
-
-    function syncColButtons() {
-        document.querySelectorAll('.ta-col-btn').forEach(function(b) {
-            b.classList.toggle('is-active', parseInt(b.dataset.cols) === state.cols);
-        });
-    }
-
-    function applyGridCols() {
-        if (window.innerWidth > 900) {
-            grid.style.gridTemplateColumns = 'repeat(' + state.cols + ', 1fr)';
-        }
-    }
-
-
-    // ══════════════════════════════════════════════════════
-    // PER PAGE
-    // ══════════════════════════════════════════════════════
-
-    document.querySelectorAll('.ta-pp-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-            state.perPage = parseInt(this.dataset.pp);
-            localStorage.setItem('ta_per_page', String(state.perPage));
-            syncPPButtons();
-            state.page = 1;
-            renderResults();
-        });
-    });
-
-    function syncPPButtons() {
-        document.querySelectorAll('.ta-pp-btn').forEach(function(b) {
-            b.classList.toggle('is-active', parseInt(b.dataset.pp) === state.perPage);
-        });
-    }
-
-
-    // ══════════════════════════════════════════════════════
-    // RENDEZÉS
-    // ══════════════════════════════════════════════════════
-
-    sortSelect.addEventListener('change', function() {
-        state.sort = this.value;
-        state.page = 1;
-        renderResults();
-    });
-
-
-    // ══════════════════════════════════════════════════════
-    // KERESŐ
-    // ══════════════════════════════════════════════════════
-
-    searchInput.addEventListener('input', function() {
-        var val = this.value.trim();
-        searchClear.style.display = val ? 'flex' : 'none';
-        state.search = val;
-        state.page = 1;
-
-        clearTimeout(searchTimer);
-        if (val.length >= 2) {
-            searchTimer = setTimeout(function() { showDropdown(val); }, 150);
+        // Grid
+        if (total === 0) {
+            grid.innerHTML = '<div class="ta-nincs">Nincs találat a szűrési feltételeknek.</div>';
         } else {
-            closeDropdown();
+            grid.innerHTML = pageItems.map(renderCard).join('');
         }
 
-        clearTimeout(renderTimer);
-        renderTimer = setTimeout(renderResults, 300);
-    });
+        // Oszlopok
+        grid.style.gridTemplateColumns = `repeat(${state.cols}, 1fr)`;
 
-    searchInput.addEventListener('focus', function() {
-        if (this.value.trim().length >= 2 && searchDropdown.children.length > 0) {
-            searchDropdown.classList.add('is-open');
-        }
-    });
-
-    searchClear.addEventListener('click', function() {
-        searchInput.value = '';
-        state.search = '';
-        this.style.display = 'none';
-        closeDropdown();
-        state.page = 1;
-        renderResults();
-        searchInput.focus();
-    });
-
-    document.addEventListener('click', function(e) {
-        if (!e.target.closest('.ta-search-bar')) closeDropdown();
-    });
-
-    function closeDropdown() {
-        searchDropdown.classList.remove('is-open');
-    }
-
-    function showDropdown(term) {
-        var q = term.toLowerCase();
-        var matches = TAPANYAG_ADATOK.filter(function(t) {
-            return [t.cim, t.kemiai_nev].join(' ').toLowerCase().indexOf(q) !== -1;
-        }).slice(0, 6);
-
-        if (matches.length === 0) {
-            searchDropdown.innerHTML = '<div class="ta-dd-empty">Nincs találat a keresésre</div>';
-        } else {
-            var html = '';
-            for (var i = 0; i < matches.length; i++) {
-                var t = matches[i];
-                var imgHtml = t.kep
-                    ? '<img class="ta-dd-item-img" src="' + t.kep + '" alt="' + escHtml(t.cim) + '">'
-                    : '<div class="ta-dd-item-img ta-dd-item-img--placeholder">💊</div>';
-
-                html += '<a href="' + t.url + '" class="ta-dd-item">';
-                html += imgHtml;
-                html += '<div class="ta-dd-item-body">';
-                html += '<span class="ta-dd-item-title">' + escHtml(t.cim) + '</span>';
-                if (t.kemiai_nev) {
-                    html += '<span class="ta-dd-item-sub">' + escHtml(t.kemiai_nev) + '</span>';
-                }
-                if (t.tipus.length) {
-                    html += '<span class="ta-dd-badge ta-dd-badge-tipus">' + escHtml(t.tipus[0]) + '</span>';
-                }
-                html += '</div></a>';
-            }
-            searchDropdown.innerHTML = html;
-        }
-        searchDropdown.classList.add('is-open');
-    }
-
-
-    // ══════════════════════════════════════════════════════
-    // SZŰRÉS + RENDEZÉS
-    // ══════════════════════════════════════════════════════
-
-    function getFilteredSorted() {
-        var q = state.search.toLowerCase();
-
-        var filtered = TAPANYAG_ADATOK.filter(function(t) {
-            if (q) {
-                var haystack = [t.cim, t.kemiai_nev, t.osszefoglalo].concat(t.tipus, t.hatas).join(' ').toLowerCase();
-                if (haystack.indexOf(q) === -1) return false;
-            }
-            if (state.filters.tapanyag_tipus && t.tipus.indexOf(state.filters.tapanyag_tipus) === -1) return false;
-            if (state.filters.oldhatosag && t.oldhatosag.indexOf(state.filters.oldhatosag) === -1) return false;
-            if (state.filters.tapanyag_csoport && t.csoport.indexOf(state.filters.tapanyag_csoport) === -1) return false;
-            if (state.filters.tapanyag_hatas && t.hatas.indexOf(state.filters.tapanyag_hatas) === -1) return false;
-            if (state.filters.esszencialis && t.esszencialis.indexOf(state.filters.esszencialis) === -1) return false;
-            return true;
-        });
-
-        filtered.sort(function(a, b) {
-            switch (state.sort) {
-                case 'title_desc':
-                    return b.cim.localeCompare(a.cim, 'hu');
-                case 'tipus_asc':
-                    var ta = a.tipus[0] || '';
-                    var tb = b.tipus[0] || '';
-                    return ta.localeCompare(tb, 'hu') || a.cim.localeCompare(b.cim, 'hu');
-                default:
-                    return a.cim.localeCompare(b.cim, 'hu');
-            }
-        });
-
-        return filtered;
-    }
-
-
-    // ══════════════════════════════════════════════════════
-    // RENDERELÉS
-    // ══════════════════════════════════════════════════════
-
-    function renderResults() {
-        var all = getFilteredSorted();
-        var total = all.length;
-        var pages = Math.ceil(total / state.perPage);
-        if (state.page > pages) state.page = Math.max(1, pages);
-
-        var start = (state.page - 1) * state.perPage;
-        var items = all.slice(start, start + state.perPage);
-
-        var hasFilter = state.search || state.filters.tapanyag_tipus || state.filters.oldhatosag || state.filters.tapanyag_csoport || state.filters.tapanyag_hatas || state.filters.esszencialis;
-
-        if (hasFilter) {
-            resultInfo.innerHTML = '<strong>' + total + '</strong> / ' + totalCountEl.textContent + ' tápanyag';
-        } else {
-            resultInfo.innerHTML = '<strong>' + total + '</strong> tápanyag';
-            totalCountEl.textContent = total;
+        // Eredmény szám
+        if (resultCount) {
+            resultCount.innerHTML = total === DATA.length
+                ? `<strong>${total}</strong> tápanyag`
+                : `<strong>${total}</strong> / ${DATA.length} tápanyag`;
         }
 
-        if (items.length === 0) {
-            grid.innerHTML =
-                '<div class="ta-empty">' +
-                '<div class="ta-empty-icon">🔍</div>' +
-                '<div class="ta-empty-text">Nincs találat</div>' +
-                '<div class="ta-empty-sub">Próbálj más keresőszót vagy állítsd át a szűrőket.</div>' +
-                '</div>';
-            pagination.innerHTML = '';
-            return;
-        }
+        // Pagination
+        renderPagination(total);
 
-        var html = '';
-        for (var i = 0; i < items.length; i++) {
-            html += renderCard(items[i], i);
-        }
-        grid.innerHTML = html;
-
-        renderPagination(total, pages, state.page);
-
+        // Scroll to top (ha nem 1. oldal)
         if (state.page > 1) {
-            window.scrollTo({ top: grid.offsetTop - 100, behavior: 'smooth' });
-        }
-    }
-
-
-    // ══════════════════════════════════════════════════════
-    // KÁRTYA RENDERELÉS
-    // ══════════════════════════════════════════════════════
-
-    function renderCard(t, idx) {
-        var tipusNev  = t.tipus[0] || '';
-        var tipusCls  = tipusClass[tipusNev] || 'vitamin';
-        var oldhatNev = t.oldhatosag[0] || '';
-        var oldhatCls = oldhatosagClass[oldhatNev] || '';
-
-        var h = '';
-        h += '<a href="' + t.url + '" class="ta-card" style="animation-delay:' + (idx * 0.04) + 's">';
-
-        h += '<div class="ta-card-img">';
-        if (t.kep) {
-            h += '<img src="' + t.kep + '" alt="' + escHtml(t.cim) + '" loading="lazy">';
-        } else {
-            h += '<div class="ta-card-img-placeholder">💊</div>';
-        }
-
-        if (tipusNev) {
-            h += '<span class="ta-card-tipus ta-card-tipus--' + tipusCls + '">' + escHtml(tipusNev) + '</span>';
-        }
-
-        if (oldhatNev && oldhatCls) {
-            h += '<span class="ta-card-oldhat ta-card-oldhat--' + oldhatCls + '">' + escHtml(oldhatNev) + '</span>';
-        }
-
-        h += '</div>';
-
-        h += '<div class="ta-card-body">';
-        h += '<h2 class="ta-card-title">' + escHtml(t.cim) + '</h2>';
-
-        if (t.kemiai_nev) {
-            h += '<p class="ta-card-kemiai">' + escHtml(t.kemiai_nev) + '</p>';
-        }
-
-        if (t.osszefoglalo) {
-            h += '<p class="ta-card-desc">' + escHtml(t.osszefoglalo) + '</p>';
-        }
-
-        if (t.hatas.length) {
-            h += '<div class="ta-card-chips">';
-            var maxChips = Math.min(t.hatas.length, 3);
-            for (var j = 0; j < maxChips; j++) {
-                h += '<span class="ta-card-chip">' + escHtml(t.hatas[j]) + '</span>';
+            const toolbarEl = document.querySelector('.ta-toolbar');
+            if (toolbarEl) {
+                toolbarEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }
-            h += '</div>';
         }
-
-        h += '</div>';
-        h += '</a>';
-        return h;
     }
 
+    /* ═══ PAGINATION ═══ */
+    function renderPagination(total) {
+        const totalPages = Math.ceil(total / state.perPage);
+        if (totalPages <= 1) { pagination.innerHTML = ''; return; }
 
-    // ══════════════════════════════════════════════════════
-    // LAPOZÁS
-    // ══════════════════════════════════════════════════════
+        const current = state.page;
+        let pages = [];
 
-    function renderPagination(total, pages, current) {
-        if (pages <= 1) { pagination.innerHTML = ''; return; }
-
-        var h = '<div class="ta-pag-inner">';
-        h += '<button class="ta-pag-btn' + (current <= 1 ? ' is-disabled' : '') + '" data-page="' + (current - 1) + '">‹</button>';
-
-        var start = Math.max(1, current - 2);
-        var end = Math.min(pages, current + 2);
-
-        if (start > 1) {
-            h += '<button class="ta-pag-btn" data-page="1">1</button>';
-            if (start > 2) h += '<span class="ta-pag-dots">…</span>';
-        }
-        for (var i = start; i <= end; i++) {
-            h += '<button class="ta-pag-btn' + (i === current ? ' is-active' : '') + '" data-page="' + i + '">' + i + '</button>';
-        }
-        if (end < pages) {
-            if (end < pages - 1) h += '<span class="ta-pag-dots">…</span>';
-            h += '<button class="ta-pag-btn" data-page="' + pages + '">' + pages + '</button>';
+        // Ellipszises logika
+        if (totalPages <= 7) {
+            for (let i = 1; i <= totalPages; i++) pages.push(i);
+        } else {
+            pages.push(1);
+            if (current > 3) pages.push('...');
+            for (let i = Math.max(2, current - 1); i <= Math.min(totalPages - 1, current + 1); i++) {
+                pages.push(i);
+            }
+            if (current < totalPages - 2) pages.push('...');
+            pages.push(totalPages);
         }
 
-        h += '<button class="ta-pag-btn' + (current >= pages ? ' is-disabled' : '') + '" data-page="' + (current + 1) + '">›</button>';
-        h += '</div>';
+        let html = '<div class="ta-pag-inner">';
+        html += `<button class="ta-pag-btn${current === 1 ? ' is-disabled' : ''}" data-page="${current - 1}"${current === 1 ? ' disabled' : ''}>‹</button>`;
 
-        pagination.innerHTML = h;
+        pages.forEach(p => {
+            if (p === '...') {
+                html += '<span class="ta-pag-dots">…</span>';
+            } else {
+                html += `<button class="ta-pag-btn${p === current ? ' is-active' : ''}" data-page="${p}">${p}</button>`;
+            }
+        });
 
-        pagination.querySelectorAll('.ta-pag-btn').forEach(function(btn) {
-            btn.addEventListener('click', function() {
-                if (this.classList.contains('is-disabled') || this.classList.contains('is-active')) return;
-                state.page = parseInt(this.dataset.page);
-                renderResults();
+        html += `<button class="ta-pag-btn${current === totalPages ? ' is-disabled' : ''}" data-page="${current + 1}"${current === totalPages ? ' disabled' : ''}>›</button>`;
+        html += '</div>';
+
+        pagination.innerHTML = html;
+
+        // Eseményfigyelők
+        pagination.querySelectorAll('.ta-pag-btn:not(.is-disabled)').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const p = parseInt(btn.dataset.page);
+                if (p >= 1 && p <= totalPages) {
+                    state.page = p;
+                    render();
+                }
             });
         });
     }
 
+    /* ═══ KERESÉS + DROPDOWN ═══ */
+    let searchTimeout;
+    searchInput.addEventListener('input', () => {
+        const val = searchInput.value.trim();
+        searchClear.style.display = val ? 'flex' : 'none';
 
-    // ══════════════════════════════════════════════════════
-    // RESPONSIVE
-    // ══════════════════════════════════════════════════════
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            // Dropdown
+            if (val.length >= 2) {
+                const q = val.toLowerCase();
+                const matches = DATA.filter(i =>
+                    i.cim.toLowerCase().includes(q) ||
+                    (i.kemiai_nev && i.kemiai_nev.toLowerCase().includes(q))
+                ).slice(0, 8);
 
-    function handleResize() {
-        if (window.innerWidth <= 900) {
-            grid.style.gridTemplateColumns = 'repeat(2, 1fr)';
+                if (matches.length) {
+                    dropdown.innerHTML = matches.map(m => {
+                        const typusClass = getTypusBadgeClass(m.tipus);
+                        const imgHtml = m.kep
+                            ? `<img src="${esc(m.kep)}" class="ta-dd-item-img" alt="">`
+                            : `<div class="ta-dd-item-img--placeholder">💊</div>`;
+                        const badges = [];
+                        if (m.tipus.length) badges.push(`<span class="ta-dd-badge ta-dd-badge--${typusClass}">${esc(m.tipus[0])}</span>`);
+                        if (m.oldhatosag.length) badges.push(`<span class="ta-dd-badge ta-dd-badge--oldhatosag">${esc(m.oldhatosag[0])}</span>`);
+                        return `<a href="${esc(m.url)}" class="ta-dd-item">${imgHtml}<div class="ta-dd-item-body"><span class="ta-dd-item-title">${esc(m.cim)}</span>${m.kemiai_nev ? `<span class="ta-dd-item-sub">${esc(m.kemiai_nev)}</span>` : ''}<div class="ta-dd-item-badges">${badges.join('')}</div></div></a>`;
+                    }).join('');
+                    dropdown.classList.add('is-open');
+                } else {
+                    dropdown.innerHTML = '<div class="ta-dd-empty">Nincs találat</div>';
+                    dropdown.classList.add('is-open');
+                }
+            } else {
+                dropdown.classList.remove('is-open');
+            }
+
+            // Szűrés
+            state.search = val;
+            applyFilters();
+        }, 200);
+    });
+
+    searchClear.addEventListener('click', () => {
+        searchInput.value = '';
+        searchClear.style.display = 'none';
+        dropdown.classList.remove('is-open');
+        state.search = '';
+        applyFilters();
+        searchInput.focus();
+    });
+
+    // Dropdown bezárás kattintásra
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.ta-search-bar')) {
+            dropdown.classList.remove('is-open');
+        }
+    });
+
+    /* ═══ SZŰRŐ PANEL ═══ */
+    filterToggle.addEventListener('click', () => {
+        const isOpen = filterPanel.classList.toggle('is-open');
+        filterToggle.classList.toggle('is-active', isOpen);
+        if (isOpen) {
+            filterPanel.style.maxHeight = filterInner.scrollHeight + 'px';
         } else {
-            applyGridCols();
+            filterPanel.style.maxHeight = '0';
         }
-        if (panelOpen) {
-            szuroPanel.style.maxHeight = szuroPanelInner.scrollHeight + 'px';
+    });
+
+    // Chip szűrők
+    document.querySelectorAll('.ta-szuro-chips').forEach(group => {
+        const filterKey = group.dataset.filter;
+        group.querySelectorAll('.ta-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                group.querySelectorAll('.ta-chip').forEach(c => c.classList.remove('is-active'));
+                chip.classList.add('is-active');
+                state.filters[filterKey] = chip.dataset.value;
+                updateFilterBadge();
+                applyFilters();
+            });
+        });
+    });
+
+    // Reset
+    filterReset.addEventListener('click', () => {
+        state.filters = { tipus: 'all', oldhatosag: 'all', esszencialis: 'all' };
+        document.querySelectorAll('.ta-szuro-chips').forEach(group => {
+            group.querySelectorAll('.ta-chip').forEach(c => c.classList.remove('is-active'));
+            const allChip = group.querySelector('[data-value="all"]');
+            if (allChip) allChip.classList.add('is-active');
+        });
+        updateFilterBadge();
+        applyFilters();
+    });
+
+    function updateFilterBadge() {
+        const count = Object.values(state.filters).filter(v => v !== 'all').length;
+        let badge = filterToggle.querySelector('.ta-filter-badge');
+        if (count > 0) {
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'ta-filter-badge';
+                filterToggle.appendChild(badge);
+            }
+            badge.textContent = count;
+        } else if (badge) {
+            badge.remove();
         }
     }
-    window.addEventListener('resize', handleResize);
-    handleResize();
 
+    /* ═══ OSZLOPVÁLTÓ ═══ */
+    document.querySelectorAll('.ta-cols-btn').forEach(btn => {
+        if (parseInt(btn.dataset.cols) === state.cols) {
+            document.querySelectorAll('.ta-cols-btn').forEach(b => b.classList.remove('is-active'));
+            btn.classList.add('is-active');
+        }
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.ta-cols-btn').forEach(b => b.classList.remove('is-active'));
+            btn.classList.add('is-active');
+            state.cols = parseInt(btn.dataset.cols);
+            localStorage.setItem('ta_cols', state.cols);
+            render();
+        });
+    });
 
-    // ══════════════════════════════════════════════════════
-    // SEGÉD
-    // ══════════════════════════════════════════════════════
+    /* ═══ OLDALANKÉNT ═══ */
+    document.querySelectorAll('.ta-perpage-btn').forEach(btn => {
+        if (parseInt(btn.dataset.pp) === state.perPage) {
+            document.querySelectorAll('.ta-perpage-btn').forEach(b => b.classList.remove('is-active'));
+            btn.classList.add('is-active');
+        }
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.ta-perpage-btn').forEach(b => b.classList.remove('is-active'));
+            btn.classList.add('is-active');
+            state.perPage = parseInt(btn.dataset.pp);
+            localStorage.setItem('ta_perpage', state.perPage);
+            state.page = 1;
+            render();
+        });
+    });
 
-    function escHtml(s) {
-        var d = document.createElement('div');
-        d.textContent = s || '';
-        return d.innerHTML;
-    }
-
-    renderResults();
+    /* ═══ INICIALIZÁLÁS ═══ */
+    state.filtered = [...DATA];
+    render();
 
 })();
