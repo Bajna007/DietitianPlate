@@ -53,6 +53,9 @@ function dpPdfConfirm() {
         state.quantities.push(ing.mennyiseg);
     });
 
+    /* ★ FIX #1: Előző adagszám tárolása a relatív skálázáshoz ★ */
+    var prevServings = INITIAL_SERVINGS;
+
     var dom = {};
 
     function cacheDom() {
@@ -82,18 +85,16 @@ function dpPdfConfirm() {
     function r1(v) { return Math.round((v + Number.EPSILON) * 10) / 10; }
     function r2(v) { return Math.round((v + Number.EPSILON) * 100) / 100; }
 
-function setText(sel, val) {
-    document.querySelectorAll(sel).forEach(function (el) {
-        // Ha van gyerek elem (pl. .makro-strip-unit span), csak a text node-ot cseréljük
-        var firstNode = el.firstChild;
-        if (firstNode && firstNode.nodeType === 3) {
-            firstNode.textContent = val;
-        } else {
-            // Ha nincs text node az elején, beszúrunk egyet
-            el.insertBefore(document.createTextNode(val), el.firstChild);
-        }
-    });
-}
+    function setText(sel, val) {
+        document.querySelectorAll(sel).forEach(function (el) {
+            var firstNode = el.firstChild;
+            if (firstNode && firstNode.nodeType === 3) {
+                firstNode.textContent = val;
+            } else {
+                el.insertBefore(document.createTextNode(val), el.firstChild);
+            }
+        });
+    }
 
     // ══ Toast ══
     var toastTimer = null;
@@ -161,27 +162,46 @@ function setText(sel, val) {
     function updateMacroDisplay(m) {
         var pct = calcPercentages(m);
 
-        // Értékek frissítése (nagy számok)
         setText('.makro-val-kcal', m.kcal);
         setText('.makro-val-feherje', m.feherje);
         setText('.makro-val-szenhidrat', m.szenhidrat);
         setText('.makro-val-zsir', m.zsir);
 
-        // Energia% frissítése
-        // Az új HTML-ben: <span class="makro-strip-pct"><span class="makro-pct-feherje">85.7</span>% energia</span>
-        // A setText csak a belső span textContent-jét frissíti, a "% energia" szöveg a szülő text node-ban marad
         setText('.makro-pct-feherje', pct.feherje.toFixed(1));
         setText('.makro-pct-szenhidrat', pct.szenhidrat.toFixed(1));
         setText('.makro-pct-zsir', pct.zsir.toFixed(1));
     }
 
+    /* ★ FIX #2: Szép "1 adag" kártyás megjelenítés ★ */
     function updatePerAdag(m) {
         if (dom.perAdagDiv && state.servings > 1) {
+            var s = state.servings;
             dom.perAdagDiv.innerHTML =
-                '1 adag: <strong>' + r1(m.kcal / state.servings) + '</strong> kcal \u00B7 ' +
-                '<strong>' + r1(m.feherje / state.servings) + '</strong>g fehérje \u00B7 ' +
-                '<strong>' + r1(m.szenhidrat / state.servings) + '</strong>g szénhidrát \u00B7 ' +
-                '<strong>' + r1(m.zsir / state.servings) + '</strong>g zs\u00EDr';
+                '<div class="per-adag-header">' +
+                    '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>' +
+                    ' 1 adag' +
+                '</div>' +
+                '<div class="per-adag-grid">' +
+                    '<div class="per-adag-item">' +
+                        '<span class="per-adag-value">' + r1(m.kcal / s) + '</span>' +
+                        '<span class="per-adag-label">kcal</span>' +
+                    '</div>' +
+                    '<div class="per-adag-sep"></div>' +
+                    '<div class="per-adag-item">' +
+                        '<span class="per-adag-value">' + r1(m.feherje / s) + '<small>g</small></span>' +
+                        '<span class="per-adag-label">fehérje</span>' +
+                    '</div>' +
+                    '<div class="per-adag-sep"></div>' +
+                    '<div class="per-adag-item">' +
+                        '<span class="per-adag-value">' + r1(m.szenhidrat / s) + '<small>g</small></span>' +
+                        '<span class="per-adag-label">szénhidrát</span>' +
+                    '</div>' +
+                    '<div class="per-adag-sep"></div>' +
+                    '<div class="per-adag-item">' +
+                        '<span class="per-adag-value">' + r1(m.zsir / s) + '<small>g</small></span>' +
+                        '<span class="per-adag-label">zsír</span>' +
+                    '</div>' +
+                '</div>';
             dom.perAdagDiv.style.display = 'block';
         } else if (dom.perAdagDiv) {
             dom.perAdagDiv.style.display = 'none';
@@ -209,7 +229,18 @@ function setText(sel, val) {
         }
     }
 
+    /* ★ FIX #1: Relatív skálázás – megőrzi a manuális módosításokat ★ */
     function applyServings() {
+        var ratio = state.servings / prevServings;
+        INGS.forEach(function (ing, idx) {
+            state.quantities[idx] = r1(state.quantities[idx] * ratio);
+        });
+        prevServings = state.servings;
+        updateUI();
+    }
+
+    /* Reset gomb: vissza az eredeti arányokra */
+    function resetToOriginal() {
         var ratio = state.servings / INITIAL_SERVINGS;
         INGS.forEach(function (ing, idx) {
             state.quantities[idx] = r1(originalQuantities[idx] * ratio);
@@ -431,8 +462,10 @@ function setText(sel, val) {
         dom.ingInputs.forEach(function (inp) {
             inp.addEventListener('input', onIngredientInput);
         });
+
+        /* ★ FIX #1: Reset gomb → eredeti arányokra ★ */
         if (dom.resetBtn) {
-            dom.resetBtn.addEventListener('click', function () { applyServings(); });
+            dom.resetBtn.addEventListener('click', function () { resetToOriginal(); });
         }
 
         // Nyomtatás
@@ -499,6 +532,8 @@ function setText(sel, val) {
             li.addEventListener('click', onStepLiClick);
         });
 
+        /* Első inicializálás – prevServings már INITIAL_SERVINGS,
+           ezért ratio = 1 → nem változtat semmit, csak updateUI()-t hív */
         applyServings();
         syncProgress();
     }
