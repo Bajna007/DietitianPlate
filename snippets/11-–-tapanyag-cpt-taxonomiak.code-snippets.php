@@ -24,6 +24,7 @@ function tapanyag_cpt_regisztralas() {
         'not_found'          => 'Nem található tápanyag',
         'not_found_in_trash' => 'Nincs tápanyag a kukában',
         'all_items'          => 'Összes tápanyag',
+        'archives'           => 'Tápanyag Archívum',
     ];
 
     $args = [
@@ -33,7 +34,7 @@ function tapanyag_cpt_regisztralas() {
         'rewrite'            => [ 'slug' => 'tapanyag', 'with_front' => false ],
         'supports'           => [ 'title', 'thumbnail', 'excerpt', 'revisions' ],
         'menu_icon'          => 'dashicons-carrot',
-        'menu_position'      => 6,
+        'menu_position'      => 22,
         'show_in_rest'       => true,
         'publicly_queryable' => true,
         'show_ui'            => true,

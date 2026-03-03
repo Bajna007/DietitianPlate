@@ -15,3 +15,10 @@ add_action( 'wp_enqueue_scripts', 'kadence_child_style' );
  * Your code goes below.
  */
 
+// Levágja a WordPress által automatikusan hozzáadott "Archívum:" prefixet CPT archív oldalakon.
+add_filter('get_the_archive_title', function($title) {
+    if (is_post_type_archive('alapanyag')) return 'Alapanyag Archívum';
+    if (is_post_type_archive('recept'))    return 'Recept Archívum';
+    if (is_post_type_archive('tapanyag'))  return 'Tápanyag Archívum';
+    return $title;
+});
