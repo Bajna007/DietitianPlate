@@ -48,6 +48,7 @@ if ( ! defined( 'CLEANUP_STALE_TIMEOUT' ) )       define( 'CLEANUP_STALE_TIMEOUT
 if ( ! defined( 'CLEANUP_REST_API_KEY_OPT' ) )    define( 'CLEANUP_REST_API_KEY_OPT',    'cleanup_rest_api_key' );
 if ( ! defined( 'CLEANUP_FUZZY_LIMIT' ) )         define( 'CLEANUP_FUZZY_LIMIT',         15000 );
 if ( ! defined( 'CLEANUP_FUZZY_SLEEP_EVERY' ) )   define( 'CLEANUP_FUZZY_SLEEP_EVERY',   500 );
+if ( ! defined( 'CLEANUP_AUTO_ENABLED_KEY' ) )    define( 'CLEANUP_AUTO_ENABLED_KEY',    'cleanup_auto_enabled' );
 if ( ! defined( 'CLEANUP_FUZZY_SLEEP_US' ) )      define( 'CLEANUP_FUZZY_SLEEP_US',      50000 );
 if ( ! defined( 'CLEANUP_MAX_RESULTS' ) )         define( 'CLEANUP_MAX_RESULTS',         2000 );
 if ( ! defined( 'CLEANUP_REST_RATE_LIMIT' ) )     define( 'CLEANUP_REST_RATE_LIMIT',     30 );
@@ -94,6 +95,7 @@ function cleanup_ensure_options(): void {
         CLEANUP_LAST_BATCH_KEY  => [],
         CLEANUP_AUTO_LAST_TIME  => '',
         CLEANUP_AUTO_LAST_COUNT => 0,
+        CLEANUP_AUTO_ENABLED_KEY => 'yes',
     ];
     foreach ( $defaults as $k => $v ) {
         if ( get_option( $k ) === false ) {
@@ -103,6 +105,11 @@ function cleanup_ensure_options(): void {
 }
 
 function cleanup_ensure_cron(): void {
+    $enabled = get_option( CLEANUP_AUTO_ENABLED_KEY, 'yes' );
+    if ( $enabled !== 'yes' ) {
+        wp_clear_scheduled_hook( CLEANUP_MIDNIGHT_HOOK );
+        return;
+    }
     $next = wp_next_scheduled( CLEANUP_MIDNIGHT_HOOK );
     if ( ! $next ) {
         $tz = wp_timezone();
@@ -623,6 +630,15 @@ function cleanup_admin_page(): void {
 
     <div style="margin:0 0 16px;display:flex;flex-wrap:wrap;gap:8px;max-width:900px;">
         <button id="cleanup-full-audit" class="button button-primary" style="font-size:14px;padding:8px 24px;" <?php echo $run ? 'disabled' : ''; ?>>📊 Teljes audit</button>
+        <?php $auto_on = get_option( CLEANUP_AUTO_ENABLED_KEY, 'yes' ) === 'yes'; ?>
+        <label style="display:inline-flex;align-items:center;gap:8px;margin-right:16px;font-size:14px;font-weight:600;cursor:pointer;user-select:none;">
+            <span>🕛 Éjféli auto</span>
+            <input type="checkbox" id="cleanup-auto-toggle" <?php echo $auto_on ? 'checked' : ''; ?> style="display:none;">
+            <span id="cleanup-auto-toggle-visual" style="display:inline-block;width:40px;height:22px;border-radius:11px;background:<?php echo $auto_on ? '#22c55e' : '#d1d5db'; ?>;position:relative;transition:background 0.25s;cursor:pointer;">
+                <span style="position:absolute;top:2px;left:<?php echo $auto_on ? '20px' : '2px'; ?>;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.15);transition:left 0.25s;"></span>
+            </span>
+            <span id="cleanup-auto-toggle-label" style="font-size:12px;color:<?php echo $auto_on ? '#16a34a' : '#9ca3af'; ?>;"><?php echo $auto_on ? 'BE' : 'KI'; ?></span>
+        </label>
         <button id="cleanup-auto-now" class="button" style="font-size:14px;padding:8px 20px;background:#7c3aed;color:#fff;border-color:#6d28d9;" <?php echo $run ? 'disabled' : ''; ?>>🕛 Auto MOST</button>
         <button id="cleanup-empty-trash" class="button" style="font-size:14px;padding:8px 20px;background:#dc2626;color:#fff;border-color:#b91c1c;" <?php echo ( $run || $rc === 0 ) ? 'disabled' : ''; ?>>🗑️ Lomtár (<?php echo intval( $rc ); ?>)</button>
         <?php if ( $undo ) : ?><button id="cleanup-undo-btn" class="button" style="font-size:14px;padding:8px 20px;background:#2563eb;color:#fff;border-color:#1d4ed8;">↩️ Undo (<?php echo count( $lb['items'] ); ?>)</button><?php endif; ?>
@@ -805,6 +821,18 @@ if($('cleanup-export-auto-csv'))$('cleanup-export-auto-csv').addEventListener('c
 
 document.querySelectorAll('.cleanup-scan-btn').forEach(function(b){b.addEventListener('click',function(){runScan(this.dataset.task);});});
 $('cleanup-full-audit').addEventListener('click',function(){runScan('full_audit');});
+
+if($('cleanup-auto-toggle'))$('cleanup-auto-toggle').addEventListener('change',function(){
+    var en=this.checked?'yes':'no';
+    var vis=$('cleanup-auto-toggle-visual');
+    var lbl=$('cleanup-auto-toggle-label');
+    if(vis){vis.style.background=this.checked?'#22c55e':'#d1d5db';vis.children[0].style.left=this.checked?'20px':'2px';}
+    if(lbl){lbl.textContent=this.checked?'BE':'KI';lbl.style.color=this.checked?'#16a34a':'#9ca3af';}
+    var fd=new FormData();fd.append('action','cleanup_toggle_auto');fd.append('nonce',cfg.nonce);fd.append('enabled',en);
+    fetch(cfg.ajaxUrl,{method:'POST',body:fd}).then(function(r){return r.json();}).then(function(r){
+        if(r.success)log('✔ '+r.data,'success');else log('✖ '+(r.data||'Hiba'),'error');
+    });
+});
 
 if($('cleanup-auto-now'))$('cleanup-auto-now').addEventListener('click',function(){
     if(!confirm('🕛 Automatikus audit MOST futtatása?\nTeljes szabálylista + automatikus kukázás.'))return;
@@ -1482,7 +1510,24 @@ add_action( 'wp_ajax_cleanup_auto_audit_now', function(): void {
     wp_send_json_success( cleanup_run_auto_audit() );
 } );
 
+add_action( 'wp_ajax_cleanup_toggle_auto', function(): void {
+    check_ajax_referer( 'cleanup_nonce', 'nonce' );
+    if ( ! current_user_can( 'manage_options' ) ) wp_send_json_error( 'Nincs jog.' );
+    $new = ( isset( $_POST['enabled'] ) && $_POST['enabled'] === 'yes' ) ? 'yes' : 'no';
+    update_option( CLEANUP_AUTO_ENABLED_KEY, $new, false );
+    if ( $new === 'yes' ) {
+        cleanup_ensure_cron();
+    } else {
+        wp_clear_scheduled_hook( CLEANUP_MIDNIGHT_HOOK );
+    }
+    wp_send_json_success( $new === 'yes' ? 'Auto audit bekapcsolva.' : 'Auto audit kikapcsolva.' );
+} );
+
 function cleanup_run_auto_audit(): string {
+    if ( get_option( CLEANUP_AUTO_ENABLED_KEY, 'yes' ) !== 'yes' ) {
+        cleanup_auto_log( '⏭ Auto audit kikapcsolva.', 'info' );
+        return 'Kikapcsolva.';
+    }
     if ( cleanup_is_locked() ) { cleanup_auto_log( '⚠️ Lock aktív', 'warning' ); return 'Lock.'; }
     if ( ! cleanup_acquire_lock() ) { cleanup_auto_log( '⚠️ Lock fail', 'warning' ); return 'Lock fail.'; }
     @set_time_limit( 600 );
