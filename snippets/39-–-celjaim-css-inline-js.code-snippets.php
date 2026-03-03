@@ -187,6 +187,7 @@ var A4_CONFIG={WIDTH_MM:210,HEIGHT_MM:297,MM_TO_PX:2.83465,get WIDTH_PX(){return
 
 var T=_T,BMR_V=_BMR,W=_W,H=_H,ACT=_ACT,ATH=_ATH,GEN=_GEN,AGE=_AGE,FORM=_FORM,AB,BMI;
 var TRG={broca:false,underweight:false,athlete:false};
+var brocaOverride=false;
 
 var FORMULAS={
 mifflin:{name:'Mifflin-St Jeor (1990)',calc:function(g,w,h,a){var b=(10*w)+(6.25*h)-(5*a);return g==='male'?b+5:b-161}},
@@ -241,8 +242,8 @@ function closestKey(map,val){var bk=null,bd=999;for(var k in map){var d=Math.abs
 function minKcal(){return GEN==='female'?1200:1500}
 function idealBroca(g,h){return g==='male'?(h-100)*0.9:(h-104)*0.85}
 function adjustedBW(g,h,w){var id=idealBroca(g,h);return r1(id+0.25*(w-id))}
-function updDerived(){BMI=bmiCalc(W,H);var isObese=BMI>=30&&!ATH;AB=isObese?adjustedBW(GEN,H,W):r1(W)}
-function recalcFromManual(){var f=FORMULAS[FORM];if(!f)f=FORMULAS.mifflin;updDerived();var cW=(BMI>=30&&!ATH)?adjustedBW(GEN,H,W):W;var rawBmr=f.calc(GEN,cW,H,AGE);if(rawBmr<0)rawBmr=0;BMR_V=Math.round(rawBmr);T=Math.round(BMR_V*ACT)}
+function updDerived(){BMI=bmiCalc(W,H);var isObese=BMI>=30&&!ATH&&!brocaOverride;AB=isObese?adjustedBW(GEN,H,W):r1(W)}
+function recalcFromManual(){var f=FORMULAS[FORM];if(!f)f=FORMULAS.mifflin;updDerived();var isObese=BMI>=30&&!ATH&&!brocaOverride;var cW=isObese?adjustedBW(GEN,H,W):W;var rawBmr=f.calc(GEN,cW,H,AGE);if(rawBmr<0)rawBmr=0;BMR_V=Math.round(rawBmr);T=Math.round(BMR_V*ACT)}
 function isUW(){return BMI>0&&BMI<18.5}
 
 function getRM(gt){
@@ -319,12 +320,26 @@ function uSt(){
 
 function updTriggers(){
     var bn=$('cj-broca-notice'),bb=$('cj-broca-notice-body'),uw=$('cj-underweight-notice'),uwb=$('cj-underweight-body'),ath=$('cj-athlete-notice'),athb=$('cj-athlete-notice-body');
-    var isObese=BMI>=30&&!ATH;TRG.broca=isObese;
+    var brocaWrap=$('cj-broca-override-wrap'),brocaChk=$('cj-broca-override');
+    var isObese=BMI>=30&&!ATH&&!brocaOverride;TRG.broca=isObese;
     if(isObese&&bn){
         var iw=idealBroca(GEN,H),abw=adjustedBW(GEN,H,W),sub=GEN==='male'?100:104,mul=GEN==='male'?'0,9':'0,85';
         bb.innerHTML='<strong>\u2696\uFE0F Korrigált testsúllyal számolva</strong><p>A BMI értéked <strong>'+BMI+' kg/m\u00B2</strong>, ami az elhízás kategóriájába esik (BMI \u2265 30 kg/m\u00B2).</p><p>Elhízásnál a valós testsúly túlbecsüli az alapanyagcserét. A kalkulátor <strong>korrigált testsúllyal</strong> ('+abw+' kg) számol:</p><div style="background:var(--dg-card);padding:12px 16px;border-radius:8px;margin:10px 0;font-size:.78rem;line-height:1.8"><strong>1. Ideális testsúly (Broca):</strong><br><code>('+H+' \u2212 '+sub+') \u00D7 '+mul+' = '+r1(iw)+' kg</code><br><br><strong>2. Korrigált testsúly (ABW):</strong><br><code>'+r1(iw)+' + 0,25 \u00D7 ('+W+' \u2212 '+r1(iw)+') = <strong>'+abw+' kg</strong></code></div><p>A többletsúly ~25%-a metabolikusan aktív szövet, ~75%-a zsír.</p><p style="margin-top:8px"><strong>\uD83D\uDD2C Pontosabb alternatíva: zsírmentes testtömeg (FFM)</strong></p><p>A zsírmentes testtömeg (Fat-Free Mass, FFM) a teljes testtömeg mínusz a zsírszövet – tehát az izom, csont, szervek és víz összessége. Ha ismered a testzsírszázalékodat (pl. DEXA, BIA, kaliper), az FFM-alapú számítás pontosabb. Enélkül a fenti Broca-korrekció a legjobb elérhető becslés.</p><p style="font-size:.68rem;color:var(--dg-text-muted);margin-top:6px">Források: <a href="https://pubmed.ncbi.nlm.nih.gov/16207687/" target="_blank">Ireton-Jones 2005</a>; <a href="https://pubmed.ncbi.nlm.nih.gov/15883556/" target="_blank">Müller et al. 2004</a></p>';
         bn.style.display=''
+    }else if(BMI>=30&&!ATH&&brocaOverride&&bn){
+        bb.innerHTML='<strong>\u26A0\uFE0F Broca-korrekció kikapcsolva</strong><p>A valós testsúllyal ('+W+' kg) számol a kalkulátor. BMI: '+BMI+' kg/m\u00B2. Elhízásnál ez túlbecsülheti az alapanyagcserét.</p>';
+        bn.style.display=''
     }else if(bn){bn.style.display='none'}
+
+    if(brocaWrap){
+        if(S.man&&BMI>=30&&!ATH){
+            brocaWrap.style.display='';
+        }else{
+            brocaWrap.style.display='none';
+            brocaOverride=false;
+            if(brocaChk)brocaChk.checked=false;
+        }
+    }
 
     var isUWv=isUW();TRG.underweight=isUWv;
     if(isUWv&&uw){
@@ -348,9 +363,20 @@ if(mChk)mChk.addEventListener('change',function(){
     manualDirty=false;
     mFld.style.display=this.checked?'':'none';
     mLbl.textContent=this.checked?'✏️ Manuális':'🔒 Importált';
+    if(!this.checked){brocaOverride=false;var brocaChk=$('cj-broca-override');if(brocaChk)brocaChk.checked=false;}
     W=_W;H=_H;AGE=_AGE;GEN=_GEN;ACT=_ACT;ATH=_ATH;FORM=_FORM;T=_T;BMR_V=_BMR;updDerived();
     uSt();updTriggers();rAll()
 });
+
+(function(){
+    var brocaChk=$('cj-broca-override');
+    if(brocaChk){
+        brocaChk.addEventListener('change',function(){
+            brocaOverride=this.checked;
+            onManual();
+        });
+    }
+})();
 
 function onManual(){
     if(!S.man)return;
@@ -548,7 +574,7 @@ function updBulk(){
     var wn=$('dg-bulk-warning'),wt=$('dg-bulk-warning-text');
     if(sp>maxOk){
         wn.style.display='';
-        wt.innerHTML='<strong>Ennyi többlet nem gyorsítja az izomépítést.</strong><p>Elég: '+Math.round(T*0.1)+'–'+maxOk+' kcal (10–20%). A felesleg zsírként raktározódik.</p>'
+        wt.innerHTML='<strong>Ekkora többlet már nem az izomépítést szolgálja.</strong><p>Ajánlott tartomány: '+Math.round(T*0.1)+'–'+maxOk+' kcal (10–20%). A felesleg nagyobb része zsírszövetként raktározódik.</p>'
     }else wn.style.display='none'
 }
 
@@ -556,7 +582,7 @@ if(sSl)sSl.addEventListener('input',function(){S.sp=parseInt(this.value)||0;updB
 
 function buildExpect(){
     var el=$('dg-bulk-expect');if(!el)return;
-    var h='<div class="dg-info-box dg-info-box--subtle" style="margin-bottom:14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><div><p>Az izomépítéshez minimális kalóriatöbblet is elegendő. A nagy felesleg nem gyorsítja az izmok növekedését – csak a zsírraktározást.</p></div></div>';
+    var h='<div class="dg-info-box dg-info-box--subtle" style="margin-bottom:14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><div><p>Hogyan épül izom? Az izom fő „anyagát" az izomfehérjék adják (pl. aktin, miozin). Ahhoz, hogy ezekből több épüljön be, kell egy egyértelmű edzésinger (leginkább mechanikus feszülés/terhelés, progresszív túlterheléssel) és kell hozzá elegendő fehérje, vagyis aminosav-ellátottság.</p><p>Energia oldalról nem az a kérdés, hogy „csak többletben lehet izmot építeni", hanem az, hogy mennyire támogatod a regenerációt és az izomfehérje-szintézis nettó egyenlegét. A kutatási összkép alapján a tartós, nagy energiahiány (főleg ha edzésvolumen is magas) gyakran rontja a sovány tömeg gyarapodásának esélyét ellenállásos edzés mellett. Emiatt sokszor elég a fenntartó környéke vagy egy kicsi plusz, különösen akkor, ha a cél a minél „tisztább" fejlődés.</p><p>Ha kifejezetten tömegnövelés a cél, egy óvatos kiindulópont lehet a kisebb többlet (pl. +10–20%) és a lassú testsúlynövekedés (kb. 0,25–0,5%/hét). Ezt viszont nem szabályként kell kezelni: a jó beállítás az, ami a saját súlytrendjeidhez, teljesítményedhez és regenerációdhoz igazítva stabilan hoz erőnövekedést és kontrollált súlygyarapodást.</p></div></div>';
     h+='<div class="dg-expect-grid"><div class="dg-expect-card"><div class="dg-expect-card-title">\uD83D\uDCAA Reális zsírmentes tömeg (FFM) gyarapodás – ellenállásos edzéssel</div>';
     h+='<div style="font-size:.72rem;color:var(--dg-text-muted);margin-bottom:10px">Vegyes nemű, rendszeres ellenállásos (rezisztencia) edzéssel. A relatív ütem nemtől független.</div>';
     h+='<div class="dg-expect-row"><span>1. év (kezdő)</span><span class="dg-expect-val" style="color:#16a34a">~4\u20137 kg/év</span></div>';
@@ -698,7 +724,15 @@ $$('.dg-macro-mode-btn').forEach(function(b){
 })();
 
 /* ═══ ⑤ Étkezés ═══ */
-var mealN=['Reggeli','Tízórai','Ebéd','Uzsonna','Vacsora','Utóvacsora'];
+var mealNameMap={
+    1:['Ebéd'],
+    2:['Reggeli','Vacsora'],
+    3:['Reggeli','Ebéd','Vacsora'],
+    4:['Reggeli','Tízórai/Uzsonna','Ebéd','Vacsora'],
+    5:['Reggeli','Tízórai','Ebéd','Uzsonna','Vacsora'],
+    6:['Reggeli','Tízórai','Ebéd','Uzsonna','Vacsora','Utóvacsora']
+};
+function getMealName(count,index){var names=mealNameMap[count]||mealNameMap[5];return names[index]||((index+1)+'. étkezés')}
 
 function dD(n){return{1:[100],2:[55,45],3:[35,40,25],4:[20,10,40,30],5:[20,10,35,10,25],6:[20,10,35,10,20,5]}[n]||[20,10,35,10,25]}
 
@@ -709,7 +743,7 @@ function buildMT(){
 
     var h='<table class="dg-meals-table"><thead><tr><th>Étkezés</th><th>Energia%</th><th>kcal</th><th>Fehérje</th><th>Zsír</th><th>CH</th></tr></thead><tbody>';
     for(var i=0;i<n;i++){
-        h+='<tr><td>'+(mealN[i]||(i+1)+'. étkezés')+'</td><td><input type="number" class="dg-meals-pct-input" id="dg-mp-'+i+'" data-idx="'+i+'" value="'+S.md[i]+'" min="0" max="100" step="0.01"> energia%</td><td id="dg-mk-'+i+'"></td><td id="dg-mpr-'+i+'"></td><td id="dg-mf-'+i+'"></td><td id="dg-mc2-'+i+'"></td></tr>'
+        h+='<tr><td>'+getMealName(n,i)+'</td><td><input type="number" class="dg-meals-pct-input" id="dg-mp-'+i+'" data-idx="'+i+'" value="'+S.md[i]+'" min="0" max="100" step="0.01"> energia%</td><td id="dg-mk-'+i+'"></td><td id="dg-mpr-'+i+'"></td><td id="dg-mf-'+i+'"></td><td id="dg-mc2-'+i+'"></td></tr>'
     }
     h+='</tbody><tfoot><tr class="dg-meals-total"><td>Összesen</td><td id="dg-mt-pct"></td><td id="dg-mt-k"></td><td id="dg-mt-p"></td><td id="dg-mt-f"></td><td id="dg-mt-c"></td></tr></tfoot></table>';
     bd.innerHTML=h;
@@ -935,6 +969,9 @@ function genPDF(){
         p+='<strong>Pontosabb alternatíva: zsírmentes testtömeg (FFM)</strong><br>';
         p+='Ha ismered a testzsírszázalékodat (pl. DEXA, BIA, kaliper), az FFM-alapú számítás pontosabb. Enélkül a Broca-korrekció a legjobb elérhető becslés.<br><br>';
         p+='<em>Források: Ireton-Jones 2005 (PMID: 16207687); Müller et al. 2004 (PMID: 15883556)</em></div>'
+    }else if(BMI>=30&&!ATH&&brocaOverride){
+        p+='<div class="warn"><strong>\u26A0\uFE0F Broca-korrekció kikapcsolva (BMI: '+BMI+' kg/m\u00B2 \u2265 30)</strong><br><br>';
+        p+='A valós testsúllyal ('+W+' kg) számol a kalkulátor. Elhízásnál ez túlbecsülheti az alapanyagcserét.</div>'
     }
 
     if(TRG.underweight){
@@ -994,7 +1031,7 @@ function genPDF(){
         p+='<div class="detail-row"><span class="detail-label">Számítás</span><span class="detail-val">'+T+' + '+S.sp+' = '+bulkKcal+' kcal</span></div>';
         p+='<div class="detail-row"><span class="detail-label">kcal/testtömeg-kg</span><span class="detail-val">'+(W>0?r1(bulkKcal/W):'-')+' kcal/ttkg</span></div>';
         p+='</div>';
-        p+='<div class="note"><strong>Hogyan épül izom?</strong><br>Az izom építőköve izomfehérje (aktin, miozin), ezért edzésinger (mechanikus tenzió) és elegendő fehérje kell. Energia oldalról nem kötelező nagy kalóriatöbblet \u2013 gyakran elég +10\u201320%. Lassú súlynövekedés (0,25\u20130,5%/hét) csökkenti a zsírfelhalmozódást.<br><em>Kassiano et al. 2025; Jäger et al. 2017; Iraki et al. 2019</em></div>'
+        p+='<div class="note"><strong>Hogyan épül izom?</strong><br>Az izom fő „anyagát" az izomfehérjék adják (pl. aktin, miozin). Kell hozzá edzésinger (mechanikus feszülés, progresszív túlterhelés) és elegendő fehérje. Energia oldalról nem az a kérdés, hogy „csak többletben lehet izmot építeni", hanem mennyire támogatod a regenerációt. A tartós, nagy energiahiány gyakran rontja a sovány tömeg gyarapodásának esélyét. Sokszor elég a fenntartó környéke vagy egy kicsi plusz. Ha kifejezetten tömegnövelés a cél, egy óvatos kiindulópont a kisebb többlet (+10\u201320%) és a lassú testsúlynövekedés (kb. 0,25\u20130,5%/hét).<br><em>Kassiano et al. 2025; Jäger et al. 2017; Iraki et al. 2019</em></div>'
     }else{
         p+='<div class="detail-box">';
         p+='<div class="detail-row"><span class="detail-label">Napi kalóriaszükséglet (TDEE)</span><span class="detail-val">'+T+' kcal/nap</span></div>';
@@ -1011,7 +1048,7 @@ function genPDF(){
     p+='<h2>\uD83C\uDF7D 5. Étkezés ('+S.mc+'\u00D7/nap)</h2><table><thead><tr><th>Étkezés</th><th>Energia%</th><th>kcal</th><th>Fehérje</th><th>Zsír</th><th>CH</th></tr></thead><tbody>';
     for(var i=0;i<S.mc;i++){
         var pc=S.md[i]||0;
-        p+='<tr><td>'+(mealN[i]||(i+1)+'.')+'</td><td>'+pc.toFixed(2)+'</td><td>'+(ek*pc/100).toFixed(0)+'</td><td>'+(pG*pc/100).toFixed(1)+' g</td><td>'+(fG*pc/100).toFixed(1)+' g</td><td>'+(cG*pc/100).toFixed(1)+' g</td></tr>'
+        p+='<tr><td>'+getMealName(S.mc,i)+'</td><td>'+pc.toFixed(2)+'</td><td>'+(ek*pc/100).toFixed(0)+'</td><td>'+(pG*pc/100).toFixed(1)+' g</td><td>'+(fG*pc/100).toFixed(1)+' g</td><td>'+(cG*pc/100).toFixed(1)+' g</td></tr>'
     }
     p+='</tbody></table>';
 

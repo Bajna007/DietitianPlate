@@ -160,6 +160,15 @@ $g_md   = $goal && is_array( $goal->meal_distribution ) ? $goal->meal_distributi
                     <option value="2.5" <?php selected( round( $activity, 3 ), '2.5' ); ?>>Sportoló – élsportoló (×2.5)</option>
                 </select></div>
             </div>
+            <div id="cj-broca-override-wrap" class="dg-field" style="display:none;margin-top:8px">
+                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82rem;font-weight:600;color:var(--dg-text)">
+                    <input type="checkbox" id="cj-broca-override" style="width:16px;height:16px;accent-color:var(--dg-accent);cursor:pointer">
+                    <span>Korrigált testsúly (Broca) kikapcsolása – valós testsúllyal számol</span>
+                </label>
+                <div style="font-size:.7rem;color:var(--dg-text-muted);margin-top:4px;padding-left:24px">
+                    ⚠️ Elhízásnál (BMI ≥ 30) a valós testsúly túlbecsülheti az alapanyagcserét. Csak akkor kapcsold ki, ha tudod mit csinálsz.
+                </div>
+            </div>
             <div id="cj-manual-kcal-fields" class="dg-row" style="grid-template-columns:1fr 1fr;margin-top:12px;display:none">
                 <div class="dg-field">
                     <label class="dg-field-label">Napi kcal bevitel</label>
