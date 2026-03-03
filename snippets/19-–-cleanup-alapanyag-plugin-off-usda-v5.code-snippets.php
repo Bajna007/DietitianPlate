@@ -1066,10 +1066,7 @@ function cleanup_scan_empty(): array {
             $n = []; if ( $k < 0 ) $n[] = 'kcal=' . $k; if ( $f < 0 ) $n[] = 'F=' . $f; if ( $ch < 0 ) $n[] = 'CH=' . $ch; if ( $zs < 0 ) $n[] = 'Zs=' . $zs;
             $items[] = $b + [ 'name' => $t, 'type' => 'negative_value', 'type_label' => 'Negatív', 'reason' => implode( ', ', $n ), 'action' => 'trash' ]; continue;
         }
-        if ( $k <= 0 )             { $s = []; if ( $ho ) $s[] = 'OFF'; if ( $hu ) $s[] = 'USDA'; $items[] = $b + [ 'name' => $t, 'type' => 'zero_kcal', 'type_label' => '0 kcal', 'reason' => '0 kcal' . ( $s ? ' (' . implode( '+', $s ) . ')' : '' ), 'action' => 'trash' ]; continue; }
-        if ( $k < CLEANUP_MIN_KCAL ) { $items[] = $b + [ 'name' => $t, 'type' => 'low_kcal', 'type_label' => '<' . CLEANUP_MIN_KCAL . 'kcal', 'reason' => round( $k, 1 ) . ' kcal', 'action' => 'trash' ]; continue; }
         if ( $k > CLEANUP_MAX_KCAL ) { $items[] = $b + [ 'name' => $t, 'type' => 'high_kcal', 'type_label' => '>' . CLEANUP_MAX_KCAL . 'kcal', 'reason' => round( $k, 1 ) . ' kcal', 'action' => 'trash' ]; continue; }
-        if ( $k > 0 && $f <= 0 && $ch <= 0 && $zs <= 0 ) { $items[] = $b + [ 'name' => $t, 'type' => 'zero_macros', 'type_label' => 'Makró=0', 'reason' => round( $k ) . 'kcal F+CH+Zs=0', 'action' => 'trash' ]; continue; }
         if ( $st === 'draft' && $k <= 0 && ! $ho && ! $hu ) { $items[] = $b + [ 'name' => $t, 'type' => 'no_data', 'type_label' => 'Draft üres', 'reason' => 'Nincs adat', 'action' => 'trash' ]; }
     }
     return [ 'items' => $items, 'scanned' => $sc ];

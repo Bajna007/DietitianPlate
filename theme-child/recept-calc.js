@@ -223,10 +223,11 @@ function dpPdfConfirm() {
         updatePerAdag(m);
         checkModified();
 
-        if (dom.warning && MISSING.length > 0) {
-            dom.warning.innerHTML = '<strong>\u26A0\uFE0F Hi\u00E1nyos makr\u00F3 adat:</strong> ' + MISSING.join(', ');
-            dom.warning.style.display = 'block';
-        }
+        // Piros flag kikapcsolva – 0 kcal alapanyagok (víz, só stb.) nem hibajelzés
+        // if (dom.warning && MISSING.length > 0) {
+        //     dom.warning.innerHTML = '<strong>\u26A0\uFE0F Hi\u00E1nyos makr\u00F3 adat:</strong> ' + MISSING.join(', ');
+        //     dom.warning.style.display = 'block';
+        // }
     }
 
     /* ★ FIX #1: Relatív skálázás – megőrzi a manuális módosításokat ★ */
