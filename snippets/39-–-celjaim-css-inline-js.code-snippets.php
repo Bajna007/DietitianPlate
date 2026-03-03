@@ -134,6 +134,16 @@ button.dg-save-secondary{display:inline-flex;align-items:center;gap:8px;padding:
 @keyframes dgFadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
 @media(max-width:768px){.cj-hero{padding:32px 16px 28px}.cj-hero-title{font-size:1.4rem!important}.cj-content{padding:0 12px}.dg-card{padding:18px}.cj-origin-grid{grid-template-columns:repeat(2,1fr)!important}.dg-row{grid-template-columns:1fr!important}.dg-saved-grid{grid-template-columns:repeat(2,1fr)}.dg-macro-mode{flex-direction:column}.cj-gate-features{grid-template-columns:1fr}.dg-actions{flex-direction:column}.dg-expect-grid{grid-template-columns:1fr}}
 @media(max-width:480px){.cj-origin-stat{padding:10px 4px}.cj-origin-stat-value{font-size:.88rem}.dg-type-grid{gap:6px}.dg-mc{padding:10px 12px}.cj-gate-inner{padding:28px 18px}}
+.cj-override-toggle-wrap{padding:10px 14px;background:var(--dg-bg);border-radius:var(--dg-radius-sm);border:1px solid var(--dg-border);margin-bottom:8px}
+.cj-override-toggle{display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none}
+.cj-override-toggle input{display:none}
+.cj-override-slider{width:38px;height:22px;background:var(--dg-border);border-radius:999px;position:relative;transition:background var(--dg-transition);flex-shrink:0}
+.cj-override-slider::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;background:#fff;border-radius:50%;transition:transform var(--dg-transition);box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.cj-override-toggle input:checked+.cj-override-slider{background:#f59e0b}
+.cj-override-toggle input:checked+.cj-override-slider::after{transform:translateX(16px)}
+.cj-override-text{display:flex;flex-direction:column;gap:1px}
+.cj-override-label{font-size:.78rem;font-weight:700;color:var(--dg-text)}
+.cj-override-desc{font-size:.66rem;color:var(--dg-text-muted);line-height:1.3}
 </style>
     <?php
 }, 20 );
@@ -188,6 +198,7 @@ var A4_CONFIG={WIDTH_MM:210,HEIGHT_MM:297,MM_TO_PX:2.83465,get WIDTH_PX(){return
 var T=_T,BMR_V=_BMR,W=_W,H=_H,ACT=_ACT,ATH=_ATH,GEN=_GEN,AGE=_AGE,FORM=_FORM,AB,BMI;
 var TRG={broca:false,underweight:false,athlete:false};
 var brocaOverride=false;
+var uwOverride=false;
 
 var FORMULAS={
 mifflin:{name:'Mifflin-St Jeor (1990)',calc:function(g,w,h,a){var b=(10*w)+(6.25*h)-(5*a);return g==='male'?b+5:b-161}},
@@ -243,8 +254,8 @@ function minKcal(){return GEN==='female'?1200:1500}
 function idealBroca(g,h){return g==='male'?(h-100)*0.9:(h-104)*0.85}
 function adjustedBW(g,h,w){var id=idealBroca(g,h);return r1(id+0.25*(w-id))}
 function updDerived(){BMI=bmiCalc(W,H);var isObese=BMI>=30&&!ATH&&!brocaOverride;AB=isObese?adjustedBW(GEN,H,W):r1(W)}
-function recalcFromManual(){var f=FORMULAS[FORM];if(!f)f=FORMULAS.mifflin;updDerived();var isObese=BMI>=30&&!ATH&&!brocaOverride;var cW=isObese?adjustedBW(GEN,H,W):W;var rawBmr=f.calc(GEN,cW,H,AGE);if(rawBmr<0)rawBmr=0;BMR_V=Math.round(rawBmr);T=Math.round(BMR_V*ACT)}
-function isUW(){return BMI>0&&BMI<18.5}
+function recalcFromManual(){var f=FORMULAS[FORM];if(!f||!f.calc)f=FORMULAS.mifflin;updDerived();var isObese=BMI>=30&&!ATH&&!brocaOverride;var cW=isObese?adjustedBW(GEN,H,W):W;var rawBmr=f.calc(GEN,cW,H,AGE);if(rawBmr<0)rawBmr=0;BMR_V=Math.round(rawBmr);T=Math.round(BMR_V*ACT)}
+function isUW(){return BMI>0&&BMI<18.5&&!uwOverride}
 
 function getRM(gt){
     if(isUW())return{pP:UW.p,fP:UW.f,cP:UW.c,pK:null,src:UW.s,mode:'fixPct',uw:true};
@@ -320,7 +331,6 @@ function uSt(){
 
 function updTriggers(){
     var bn=$('cj-broca-notice'),bb=$('cj-broca-notice-body'),uw=$('cj-underweight-notice'),uwb=$('cj-underweight-body'),ath=$('cj-athlete-notice'),athb=$('cj-athlete-notice-body');
-    var brocaWrap=$('cj-broca-override-wrap'),brocaChk=$('cj-broca-override');
     var isObese=BMI>=30&&!ATH&&!brocaOverride;TRG.broca=isObese;
     if(isObese&&bn){
         var iw=idealBroca(GEN,H),abw=adjustedBW(GEN,H,W),sub=GEN==='male'?100:104,mul=GEN==='male'?'0,9':'0,85';
@@ -331,20 +341,26 @@ function updTriggers(){
         bn.style.display=''
     }else if(bn){bn.style.display='none'}
 
+    if(corrOverrides){corrOverrides.style.display=S.man?'':'none'}
+
+    var showBroca=S.man&&BMI>=30&&!ATH;
     if(brocaWrap){
-        if(S.man&&BMI>=30&&!ATH){
-            brocaWrap.style.display='';
-        }else{
-            brocaWrap.style.display='none';
-            brocaOverride=false;
-            if(brocaChk)brocaChk.checked=false;
-        }
+        brocaWrap.style.display=showBroca?'':'none';
+        if(!showBroca&&brocaOverride){brocaOverride=false;if(brocaChk)brocaChk.checked=false}
     }
 
-    var isUWv=isUW();TRG.underweight=isUWv;
-    if(isUWv&&uw){
+    var isUWv=BMI>0&&BMI<18.5;TRG.underweight=isUWv&&!uwOverride;
+    var showUw=S.man&&isUWv;
+    if(uwWrap){
+        uwWrap.style.display=showUw?'':'none';
+        if(!showUw&&uwOverride){uwOverride=false;if(uwChk)uwChk.checked=false}
+    }
+    if(isUWv&&!uwOverride&&uw){
         var mW=minW4B();
         uwb.innerHTML='<strong>\u26A0\uFE0F Alultápláltság kockázata – BMI: '+BMI+' kg/m\u00B2</strong><p>A BMI értéked '+BMI+' kg/m\u00B2, ami 18,5 kg/m\u00B2 alatt van. A WHO besorolása szerint ez az alultápláltság kategóriája.</p><p>A '+H+' cm magasságodhoz a legalacsonyabb egészséges testsúly <strong>'+mW+' kg</strong> (BMI = 18,5 kg/m\u00B2).</p><p style="margin-top:8px"><strong>Ajánlott táplálkozási irányelvek:</strong></p><ul style="margin:6px 0 6px 18px;padding:0;font-size:.76rem;line-height:1.7"><li><strong>Napi energia:</strong> 35–40 kcal/ttkg \u2192 <strong>'+Math.round(35*W)+'–'+Math.round(40*W)+' kcal/nap</strong></li><li><strong>Fehérje:</strong> 1,2–1,5 g/ttkg \u2192 <strong>'+r1(1.2*W)+'–'+r1(1.5*W)+' g/nap</strong></li><li><strong>Makró elosztás:</strong> 20% fehérje \u00B7 30% zsír \u00B7 50% szénhidrát</li></ul><p>A makrók automatikusan energia- és fehérjebő módra váltottak. Fordulj dietetikushoz vagy orvoshoz.</p><p style="font-size:.68rem;color:var(--dg-text-muted);margin-top:6px">Források: <a href="https://pubmed.ncbi.nlm.nih.gov/11234459/" target="_blank">WHO TRS 894 (2000)</a>; <a href="https://pubmed.ncbi.nlm.nih.gov/27637832/" target="_blank">ESPEN – Cederholm 2017</a>; <a href="https://mdosz.hu/okostanyer/" target="_blank">MDOSZ Okostányér (2021)</a></p>';
+        uw.style.display=''
+    }else if(isUWv&&uwOverride&&uw){
+        uwb.innerHTML='<strong>\u26A0\uFE0F Alultápláltság-korrekció kikapcsolva</strong><p>Normál makró elosztás, bár a BMI ('+BMI+' kg/m\u00B2) az alultápláltság kategóriába esik. Orvosi konzultáció ajánlott.</p>';
         uw.style.display=''
     }else if(uw){uw.style.display='none'}
 
@@ -357,26 +373,36 @@ function updTriggers(){
 
 var mChk=$('cj-manual-check'),mFld=$('cj-manual-fields'),mLbl=$('cj-manual-label');
 var mBw=$('cj-m-bw'),mHt=$('cj-m-ht'),mAge=$('cj-m-age'),mGen=$('cj-m-gender'),mForm=$('cj-m-formula'),mAct=$('cj-m-act');
+var brocaChk=$('cj-broca-override'),brocaWrap=$('cj-broca-override-wrap');
+var uwChk=$('cj-uw-override'),uwWrap=$('cj-uw-override-wrap');
+var corrOverrides=$('cj-correction-overrides');
 
 if(mChk)mChk.addEventListener('change',function(){
     S.man=this.checked;
     manualDirty=false;
     mFld.style.display=this.checked?'':'none';
     mLbl.textContent=this.checked?'✏️ Manuális':'🔒 Importált';
-    if(!this.checked){brocaOverride=false;var brocaChk=$('cj-broca-override');if(brocaChk)brocaChk.checked=false;}
+    if(!this.checked){
+        brocaOverride=false;uwOverride=false;
+        if(brocaChk)brocaChk.checked=false;
+        if(uwChk)uwChk.checked=false;
+    }
     W=_W;H=_H;AGE=_AGE;GEN=_GEN;ACT=_ACT;ATH=_ATH;FORM=_FORM;T=_T;BMR_V=_BMR;updDerived();
     uSt();updTriggers();rAll()
 });
 
-(function(){
-    var brocaChk=$('cj-broca-override');
-    if(brocaChk){
-        brocaChk.addEventListener('change',function(){
-            brocaOverride=this.checked;
-            onManual();
-        });
-    }
-})();
+if(brocaChk){
+    brocaChk.addEventListener('change',function(){
+        brocaOverride=this.checked;
+        if(S.man){recalcFromManual();uSt();updTriggers();rAll()}
+    });
+}
+if(uwChk){
+    uwChk.addEventListener('change',function(){
+        uwOverride=this.checked;
+        if(S.man){uSt();updTriggers();rAll()}
+    });
+}
 
 function onManual(){
     if(!S.man)return;
@@ -582,7 +608,7 @@ if(sSl)sSl.addEventListener('input',function(){S.sp=parseInt(this.value)||0;updB
 
 function buildExpect(){
     var el=$('dg-bulk-expect');if(!el)return;
-    var h='<div class="dg-info-box dg-info-box--subtle" style="margin-bottom:14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><div><p>Hogyan épül izom? Az izom fő „anyagát" az izomfehérjék adják (pl. aktin, miozin). Ahhoz, hogy ezekből több épüljön be, kell egy egyértelmű edzésinger (leginkább mechanikus feszülés/terhelés, progresszív túlterheléssel) és kell hozzá elegendő fehérje, vagyis aminosav-ellátottság.</p><p>Energia oldalról nem az a kérdés, hogy „csak többletben lehet izmot építeni", hanem az, hogy mennyire támogatod a regenerációt és az izomfehérje-szintézis nettó egyenlegét. A kutatási összkép alapján a tartós, nagy energiahiány (főleg ha edzésvolumen is magas) gyakran rontja a sovány tömeg gyarapodásának esélyét ellenállásos edzés mellett. Emiatt sokszor elég a fenntartó környéke vagy egy kicsi plusz, különösen akkor, ha a cél a minél „tisztább" fejlődés.</p><p>Ha kifejezetten tömegnövelés a cél, egy óvatos kiindulópont lehet a kisebb többlet (pl. +10–20%) és a lassú testsúlynövekedés (kb. 0,25–0,5%/hét). Ezt viszont nem szabályként kell kezelni: a jó beállítás az, ami a saját súlytrendjeidhez, teljesítményedhez és regenerációdhoz igazítva stabilan hoz erőnövekedést és kontrollált súlygyarapodást.</p></div></div>';
+    var h='<div class="dg-info-box dg-info-box--subtle" style="margin-bottom:14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><div><p>Az izomépítéshez minimális kalóriatöbblet is elegendő. A nagy felesleg nem gyorsítja az izmok növekedését – csak a zsírraktározást.</p></div></div>';
     h+='<div class="dg-expect-grid"><div class="dg-expect-card"><div class="dg-expect-card-title">\uD83D\uDCAA Reális zsírmentes tömeg (FFM) gyarapodás – ellenállásos edzéssel</div>';
     h+='<div style="font-size:.72rem;color:var(--dg-text-muted);margin-bottom:10px">Vegyes nemű, rendszeres ellenállásos (rezisztencia) edzéssel. A relatív ütem nemtől független.</div>';
     h+='<div class="dg-expect-row"><span>1. év (kezdő)</span><span class="dg-expect-val" style="color:#16a34a">~4\u20137 kg/év</span></div>';
@@ -1031,7 +1057,7 @@ function genPDF(){
         p+='<div class="detail-row"><span class="detail-label">Számítás</span><span class="detail-val">'+T+' + '+S.sp+' = '+bulkKcal+' kcal</span></div>';
         p+='<div class="detail-row"><span class="detail-label">kcal/testtömeg-kg</span><span class="detail-val">'+(W>0?r1(bulkKcal/W):'-')+' kcal/ttkg</span></div>';
         p+='</div>';
-        p+='<div class="note"><strong>Hogyan épül izom?</strong><br>Az izom fő „anyagát" az izomfehérjék adják (pl. aktin, miozin). Kell hozzá edzésinger (mechanikus feszülés, progresszív túlterhelés) és elegendő fehérje. Energia oldalról nem az a kérdés, hogy „csak többletben lehet izmot építeni", hanem mennyire támogatod a regenerációt. A tartós, nagy energiahiány gyakran rontja a sovány tömeg gyarapodásának esélyét. Sokszor elég a fenntartó környéke vagy egy kicsi plusz. Ha kifejezetten tömegnövelés a cél, egy óvatos kiindulópont a kisebb többlet (+10\u201320%) és a lassú testsúlynövekedés (kb. 0,25\u20130,5%/hét).<br><em>Kassiano et al. 2025; Jäger et al. 2017; Iraki et al. 2019</em></div>'
+        p+='<div class="note"><strong>Hogyan épül izom?</strong><br>Az izom fő „anyagát" az izomfehérjék adják (pl. aktin, miozin). Kell hozzá edzésinger (mechanikus feszülés, progresszív túlterhelés) és elegendő fehérje. Energia oldalról nem az a kérdés, hogy „csak többletben lehet izmot építeni", hanem mennyire támogatod a regenerációt. A tartós, nagy energiahiány gyakran rontja a sovány tömeg gyarapodásának esélyét. Sokszor elég a fenntartó környéke vagy egy kicsi plusz. Ha kifejezetten tömegnövelés a cél, egy óvatos kiindulópont a kisebb többlet (+10\u201320%) és a lassú testsúlynövekedés (kb. 0,25\u20130,5%/hét).</div>'
     }else{
         p+='<div class="detail-box">';
         p+='<div class="detail-row"><span class="detail-label">Napi kalóriaszükséglet (TDEE)</span><span class="detail-val">'+T+' kcal/nap</span></div>';
