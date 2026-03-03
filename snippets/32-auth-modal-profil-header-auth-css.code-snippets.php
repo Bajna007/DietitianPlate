@@ -70,6 +70,9 @@ $c .= '.dp-auth-legal{white-space:normal!important;word-break:normal!important;o
 
     $c .= '.dp-auth-footer-note{font-size:11.5px;color:#aaa;text-align:center;margin:20px 0 0;line-height:1.5}.dp-auth-footer-note a{color:#2d6a4f;text-decoration:underline}';
 
+    /* ── CLOUDFLARE TURNSTILE ── */
+    $c .= '.dp-turnstile-wrap{display:flex;justify-content:center;margin:12px 0 4px;min-height:65px}';
+
     /* ── KEDVENC GOMB (recept kártyákon) ── */
     $c .= '.dp-fav-btn{position:absolute;top:12px;right:12px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:none!important;border-radius:50%!important;background:rgba(255,255,255,0.85)!important;backdrop-filter:blur(6px);cursor:pointer;z-index:5;transition:all .25s ease;outline:none!important;box-shadow:0 2px 8px rgba(0,0,0,0.1)!important;-webkit-appearance:none!important;padding:0!important}.dp-fav-btn svg{width:18px;height:18px;transition:all .25s ease;fill:none;stroke:#999;stroke-width:2}.dp-fav-btn:hover{background:#fff!important;transform:scale(1.1)}.dp-fav-btn:hover svg{stroke:#dc2626}.dp-fav-btn.is-active{background:rgba(220,38,38,0.1)!important}.dp-fav-btn.is-active svg{fill:#dc2626;stroke:#dc2626}.dp-fav-btn.dp-fav-loading{opacity:.5;pointer-events:none}.dp-fav-btn--card{top:10px;right:10px}';
 

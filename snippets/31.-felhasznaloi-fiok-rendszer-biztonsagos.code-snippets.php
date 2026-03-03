@@ -19,6 +19,7 @@
  * ✅ Disposable email tiltás
  * ✅ Brute force védelem (IP + email alapú)
  * ✅ Honeypot bot védelem
+ * ✅ Cloudflare Turnstile (bot védelem)
  * ✅ Audit log (sikeres/sikertelen login)
  * ✅ Lejárt token takarítás (cron)
  * ✅ Cookie biztonság (httpOnly, secure, SameSite)
@@ -30,6 +31,8 @@
  * Kulcsok wp-config.php-ban:
  *   define( 'DP_GOOGLE_CLIENT_ID', '...' );
  *   define( 'DP_GOOGLE_CLIENT_SECRET', '...' );
+ *   define( 'DP_CF_TURNSTILE_SITEKEY', 'IDE_A_SITE_KEY' );
+ *   define( 'DP_CF_TURNSTILE_SECRET',  'IDE_A_SECRET_KEY' );
  */
 if ( ! defined( 'ABSPATH' ) ) exit;
 
@@ -101,6 +104,47 @@ if ( ! function_exists( 'dp_honeypot_check' ) ) {
         if ( ! empty( $_POST['dp_fax_number'] ) ) {
             wp_send_json_error( array( 'message' => 'Érvénytelen kérés.' ) );
         }
+    }
+}
+
+/* ── Cloudflare Turnstile szerver oldali validáció ── */
+if ( ! function_exists( 'dp_verify_turnstile' ) ) {
+    function dp_verify_turnstile() {
+        /* Ha nincs konfigurálva → engedjük át (fejlesztéshez) */
+        if ( ! defined( 'DP_CF_TURNSTILE_SITEKEY' ) || ! DP_CF_TURNSTILE_SITEKEY ) {
+            return true;
+        }
+        if ( ! defined( 'DP_CF_TURNSTILE_SECRET' ) || ! DP_CF_TURNSTILE_SECRET ) {
+            return true;
+        }
+
+        $token = isset( $_POST['cf-turnstile-response'] )
+            ? sanitize_text_field( $_POST['cf-turnstile-response'] )
+            : '';
+
+        if ( empty( $token ) ) {
+            return false;
+        }
+
+        $response = wp_remote_post( 'https://challenges.cloudflare.com/turnstile/v0/siteverify', array(
+            'timeout' => 10,
+            'body'    => array(
+                'secret'   => DP_CF_TURNSTILE_SECRET,
+                'response' => $token,
+                'remoteip' => isset( $_SERVER['REMOTE_ADDR'] )
+                    ? sanitize_text_field( $_SERVER['REMOTE_ADDR'] )
+                    : '',
+            ),
+        ) );
+
+        if ( is_wp_error( $response ) ) {
+            error_log( 'DP Turnstile verify hiba: ' . $response->get_error_message() );
+            dp_audit_log( 'turnstile_bypass', '', false, 'wp_error: ' . $response->get_error_message() );
+            return true; /* Hiba esetén fallback: ne zárjuk ki a usert */
+        }
+
+        $body = json_decode( wp_remote_retrieve_body( $response ), true );
+        return ! empty( $body['success'] );
     }
 }
 
@@ -385,6 +429,11 @@ add_action( 'wp_ajax_nopriv_dp_register', function() {
     check_ajax_referer( 'dp_auth_nonce', 'nonce' );
     dp_honeypot_check();
 
+    if ( ! dp_verify_turnstile() ) {
+        dp_constant_time_delay( $start );
+        wp_send_json_error( array( 'message' => 'Kérjük, igazold, hogy nem vagy robot.' ) );
+    }
+
     $email = sanitize_email( isset( $_POST['email'] ) ? $_POST['email'] : '' );
 
     if ( ! dp_rate_check( 'register', 5, 30, $email ) ) {
@@ -512,6 +561,11 @@ add_action( 'wp_ajax_nopriv_dp_login', function() {
     check_ajax_referer( 'dp_auth_nonce', 'nonce' );
     dp_honeypot_check();
 
+    if ( ! dp_verify_turnstile() ) {
+        dp_constant_time_delay( $start );
+        wp_send_json_error( array( 'message' => 'Kérjük, igazold, hogy nem vagy robot.' ) );
+    }
+
     $email = sanitize_email( isset( $_POST['email'] ) ? $_POST['email'] : '' );
 
     if ( ! dp_rate_check( 'login', 10, 15, $email ) ) {
@@ -585,6 +639,11 @@ add_action( 'wp_ajax_nopriv_dp_forgot_password', function() {
     $start = microtime( true );
     check_ajax_referer( 'dp_auth_nonce', 'nonce' );
     dp_honeypot_check();
+
+    if ( ! dp_verify_turnstile() ) {
+        dp_constant_time_delay( $start );
+        wp_send_json_error( array( 'message' => 'Kérjük, igazold, hogy nem vagy robot.' ) );
+    }
 
     $email = sanitize_email( isset( $_POST['email'] ) ? $_POST['email'] : '' );
 
@@ -694,14 +753,20 @@ add_action( 'wp_enqueue_scripts', function() {
     wp_enqueue_script( 'dp-user-account', get_stylesheet_directory_uri() . '/user-account.js', array(), '7.0', true );
 
     $data = array(
-        'logged_in'    => false,
-        'favorites'    => array(),
-        'ajax_url'     => admin_url( 'admin-ajax.php' ),
-        'nonce'        => wp_create_nonce( 'dp_auth_nonce' ),
-        'profile_url'  => home_url( '/profil/' ),
-        'google_url'   => '',
-        'privacy_url'  => home_url( '/adatvedelmi-iranyelvek/' ),
+        'logged_in'        => false,
+        'favorites'        => array(),
+        'ajax_url'         => admin_url( 'admin-ajax.php' ),
+        'nonce'            => wp_create_nonce( 'dp_auth_nonce' ),
+        'profile_url'      => home_url( '/profil/' ),
+        'google_url'       => '',
+        'privacy_url'      => home_url( '/adatvedelmi-iranyelvek/' ),
+        'turnstile_sitekey' => ( defined( 'DP_CF_TURNSTILE_SITEKEY' ) && DP_CF_TURNSTILE_SITEKEY ) ? DP_CF_TURNSTILE_SITEKEY : '',
     );
+
+    /* Cloudflare Turnstile betöltés */
+    if ( ! is_user_logged_in() && defined( 'DP_CF_TURNSTILE_SITEKEY' ) && DP_CF_TURNSTILE_SITEKEY ) {
+        wp_enqueue_script( 'cf-turnstile', 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit', array(), null, true );
+    }
 
     if ( is_user_logged_in() ) {
         $u = wp_get_current_user();
@@ -778,6 +843,7 @@ add_action( 'wp_footer', function() {
                 <div class="dp-auth-field"><label for="dp-login-password">Jelszó</label><input type="password" id="dp-login-password" name="password" required autocomplete="current-password" placeholder="••••••••"></div>
                 <div class="dp-auth-field-row"><label class="dp-auth-remember"><input type="checkbox" name="remember" checked> Emlékezz rám</label><button type="button" class="dp-auth-forgot" id="dp-forgot-trigger">Elfelejtett jelszó?</button></div>
                 <div class="dp-auth-message" id="dp-login-message"></div>
+                <div id="dp-turnstile-login" class="dp-turnstile-wrap"></div>
                 <button type="submit" class="dp-auth-submit">Bejelentkezés</button>
             </form>
             <form class="dp-auth-form" id="dp-register-form" style="display:none;">
@@ -790,6 +856,7 @@ add_action( 'wp_footer', function() {
                     <p class="dp-auth-legal">A <strong>Regisztráció</strong> gomb megnyomásával elfogadod az <a href="<?php echo $privacy_url; ?>" target="_blank" rel="noopener">Adatvédelmi tájékoztatót</a> és az <a href="<?php echo $aszf_url; ?>" target="_blank" rel="noopener">ÁSZF-et</a>.</p>
                 </div>
                 <div class="dp-auth-message" id="dp-register-message"></div>
+                <div id="dp-turnstile-register" class="dp-turnstile-wrap"></div>
                 <button type="submit" class="dp-auth-submit">Regisztráció</button>
             </form>
             <form class="dp-auth-form" id="dp-forgot-form" style="display:none;">
@@ -797,6 +864,7 @@ add_action( 'wp_footer', function() {
                 <p class="dp-auth-forgot-desc">Add meg az email címed és küldünk egy visszaállítási linket.</p>
                 <div class="dp-auth-field"><label for="dp-forgot-email">Email</label><input type="email" id="dp-forgot-email" name="email" required autocomplete="email" placeholder="te@email.com"></div>
                 <div class="dp-auth-message" id="dp-forgot-message"></div>
+                <div id="dp-turnstile-forgot" class="dp-turnstile-wrap"></div>
                 <button type="submit" class="dp-auth-submit">Visszaállítási link küldése</button>
                 <button type="button" class="dp-auth-back" id="dp-forgot-back">← Vissza a bejelentkezéshez</button>
             </form>
