@@ -139,6 +139,30 @@ $g_md   = $goal && is_array( $goal->meal_distribution ) ? $goal->meal_distributi
         <div id="cj-underweight-notice" class="dg-info-box dg-info-box--warn" style="margin-top:6px;display:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 9v4m0 4h.01M12 2L2 22h20L12 2z"/></svg><div id="cj-underweight-body"></div></div>
         <div id="cj-athlete-notice" class="dg-info-box dg-info-box--blue" style="margin-top:6px;display:none"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><div id="cj-athlete-notice-body"></div></div>
 
+        <!-- Korrekció felülbírálás togglek (csak manuális módban) -->
+        <div id="cj-correction-overrides" style="display:none;margin-top:10px">
+            <div id="cj-broca-override-wrap" class="cj-override-toggle-wrap" style="display:none">
+                <label class="cj-override-toggle">
+                    <input type="checkbox" id="cj-broca-override">
+                    <span class="cj-override-slider"></span>
+                    <span class="cj-override-text">
+                        <span class="cj-override-label">⚖️ Broca-korrekció kikapcsolása</span>
+                        <span class="cj-override-desc">Valós testsúllyal számol (nem korrigált ABW-vel)</span>
+                    </span>
+                </label>
+            </div>
+            <div id="cj-uw-override-wrap" class="cj-override-toggle-wrap" style="display:none">
+                <label class="cj-override-toggle">
+                    <input type="checkbox" id="cj-uw-override">
+                    <span class="cj-override-slider"></span>
+                    <span class="cj-override-text">
+                        <span class="cj-override-label">⚠️ Alultápláltság-korrekció kikapcsolása</span>
+                        <span class="cj-override-desc">Normál makró elosztás alacsonytesttömeg-indexnél is</span>
+                    </span>
+                </label>
+            </div>
+        </div>
+
         <div id="cj-manual-fields" class="cj-manual-fields" style="display:none">
             <div class="dg-info-box dg-info-box--orange" style="margin-bottom:14px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 9v4m0 4h.01M12 2L2 22h20L12 2z"/></svg><div><strong>Manuális mód</strong><p>Az alábbi értékek felülírják az importált adatokat. Minden automatikusan újraszámolódik.</p></div></div>
             <div class="dg-row" style="grid-template-columns:1fr 1fr 1fr 1fr">
@@ -159,15 +183,6 @@ $g_md   = $goal && is_array( $goal->meal_distribution ) ? $goal->meal_distributi
                     <option value="2.3" <?php selected( round( $activity, 3 ), '2.3' ); ?>>Sportoló – versenyző (×2.3)</option>
                     <option value="2.5" <?php selected( round( $activity, 3 ), '2.5' ); ?>>Sportoló – élsportoló (×2.5)</option>
                 </select></div>
-            </div>
-            <div id="cj-broca-override-wrap" class="dg-field" style="display:none;margin-top:8px">
-                <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.82rem;font-weight:600;color:var(--dg-text)">
-                    <input type="checkbox" id="cj-broca-override" style="width:16px;height:16px;accent-color:var(--dg-accent);cursor:pointer">
-                    <span>Korrigált testsúly (Broca) kikapcsolása – valós testsúllyal számol</span>
-                </label>
-                <div style="font-size:.7rem;color:var(--dg-text-muted);margin-top:4px;padding-left:24px">
-                    ⚠️ Elhízásnál (BMI ≥ 30) a valós testsúly túlbecsülheti az alapanyagcserét. Csak akkor kapcsold ki, ha tudod mit csinálsz.
-                </div>
             </div>
             <div id="cj-manual-kcal-fields" class="dg-row" style="grid-template-columns:1fr 1fr;margin-top:12px;display:none">
                 <div class="dg-field">
@@ -236,10 +251,10 @@ $g_md   = $goal && is_array( $goal->meal_distribution ) ? $goal->meal_distributi
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
             <div>
                 <strong>Hogyan épül izom?</strong>
-                <p>Az izom építőköve nagyrészt izomfehérje (például aktin és miozin), ezért izomépítéshez edzésinger (mechanikus tenzió) és elegendő fehérje (aminosav „alapanyag") kell.</p>
-                <p>Energia oldalról nem kötelező nagy kalóriatöbblet: az összegző eredmények azt mutatják, hogy a tartós, nagy energiahiány rontja a sovány tömeg gyarapodását ellenállásos edzés mellett – tehát gyakran elég a fenntartó környéke vagy egy minimális többlet.</p>
-                <p>Ha mégis tömegnövelés a cél, egy gyakori, óvatos kiindulópont a kicsi plusz (pl. +10–20%) és lassú súlynövekedés (kb. 0,25–0,5%/hét) – de ezt mindig a saját trendjeidhez érdemes igazítani.</p>
-                <p style="font-size:.68rem;color:var(--dg-text-muted);margin-top:6px">Források: <a href="https://pubmed.ncbi.nlm.nih.gov/40566702/" target="_blank">Kassiano et al. 2025</a> – sziszt. áttekintés + metaanalízis; <a href="https://pubmed.ncbi.nlm.nih.gov/28698222/" target="_blank">Jäger et al. / ISSN 2017</a>; <a href="https://pubmed.ncbi.nlm.nih.gov/34623696/" target="_blank">Murphy & Koehler 2022</a>; <a href="https://pubmed.ncbi.nlm.nih.gov/31247944/" target="_blank">Iraki et al. 2019</a></p>
+                <p>Az izom fő „anyagát" az izomfehérjék adják (pl. aktin, miozin). Ahhoz, hogy ezekből több épüljön be, kell egy egyértelmű edzésinger (leginkább mechanikus feszülés/terhelés, progresszív túlterheléssel) és kell hozzá elegendő fehérje, vagyis aminosav-ellátottság.</p>
+                <p>Energia oldalról nem az a kérdés, hogy „csak többletben lehet izmot építeni", hanem az, hogy mennyire támogatod a regenerációt és az izomfehérje-szintézis nettó egyenlegét. A kutatási összkép alapján a tartós, nagy energiahiány (főleg ha edzésvolumen is magas) gyakran rontja a sovány tömeg gyarapodásának esélyét ellenállásos edzés mellett. Emiatt sokszor elég a fenntartó környéke vagy egy kicsi plusz, különösen akkor, ha a cél a minél „tisztább" fejlődés.</p>
+                <p>Ha kifejezetten tömegnövelés a cél, egy óvatos kiindulópont lehet a kisebb többlet (pl. +10–20%) és a lassú testsúlynövekedés (kb. 0,25–0,5%/hét). Ezt viszont nem szabályként kell kezelni: a jó beállítás az, ami a saját súlytrendjeidhez, teljesítményedhez és regenerációdhoz igazítva stabilan hoz erőnövekedést és kontrollált súlygyarapodást.</p>
+                <p style="font-size:.68rem;color:var(--dg-text-muted);margin-top:6px">Források: <a href="https://pubmed.ncbi.nlm.nih.gov/40566702/" target="_blank">Kassiano et al. 2025</a> – sziszt. áttekintés + metaanalízis; <a href="https://pubmed.ncbi.nlm.nih.gov/28698222/" target="_blank">Jäger et al. / ISSN 2017</a>; <a href="https://pubmed.ncbi.nlm.nih.gov/34623696/" target="_blank">Murphy &amp; Koehler 2022</a>; <a href="https://pubmed.ncbi.nlm.nih.gov/31247944/" target="_blank">Iraki et al. 2019</a></p>
             </div>
         </div>
         <div class="dg-cut-slider-section">
